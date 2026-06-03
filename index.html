@@ -128,6 +128,16 @@
 
     const DEFAULT_SPORTS = ["Basketball", "Volleyball", "Soccer", "Hockey", "Custom"];
 
+    // Gym Sound Board sound effect files and synthetic fallback descriptions
+    const SOUND_EFFECTS = [
+      { id: 'horn', name: 'Main Buzzer', icon: 'volume-2', file: 'Buzzer Sound.mp3' },
+      { id: 'airhorn', name: 'Stadium Airhorn', icon: 'volume-2', file: 'Airhorn.mp3' },
+      { id: 'whistle', name: 'Referee Whistle', icon: 'volume-2', file: 'Whistle.mp3' },
+      { id: 'defense', name: 'Defense Beat', icon: 'volume-2', file: 'Defense.mp3' },
+      { id: 'charge', name: 'Charge Organ', icon: 'volume-2', file: 'Charge.mp3' },
+      { id: 'hype', name: 'Gym Laser Hype', icon: 'volume-2', file: 'Hype.mp3' }
+    ];
+
     // Custom Inline SVG Icon Component to bypass Lucide DOM-mutation bugs
     function Icon({ name, className = "w-5 h-5" }) {
       const icons = {
@@ -236,6 +246,13 @@
             <circle cx="12" cy="12" r="3" />
             <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
           </svg>
+        ),
+        bullhorn: (
+          <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <path d="m18 8-1.28.32A6.5 6.5 0 0 0 12 14.63V17c0 .55-.45 1-1 1H9v3h6v-3h-1.5c-.28 0-.5-.22-.5-.5v-1" />
+            <path d="M11 2s-3.5 1-4 4.5V11c0 2 1.5 3.5 3.5 3.5h3C15 14.5 17 12 17 9.5V6.5c-.5-3.5-4-4.5-4-4.5z" />
+            <path d="M15.5 14h3.5a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-3.5" />
+          </svg>
         )
       };
 
@@ -334,6 +351,8 @@
         shotClock: 24,
         isShotClockRunning: false,
         lastBuzzerTriggered: 0, 
+        lastSoundTriggered: 0, // Track time of last triggered soundBoard sound
+        activeSoundId: 'none'  // Stores standard ID of active sound to play
       });
 
       // Local Display Timer calculation refs
@@ -352,68 +371,222 @@
         }
       }, []);
 
-      // Synthesize rich Web Audio API fallback to emulate the physical sound profile of Buzzer Sound.mp3
-      const playSynthesizedGymBuzzer = () => {
+      // Synthesize modular Web Audio API sports-effects as robust, lag-free native assets
+      const playSynthesizedSound = (soundId) => {
         try {
           const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
           
-          // Use multiple detuned raw oscillators for a fat, realistic retro-sounding electronic horn
-          const osc1 = audioCtx.createOscillator();
-          const osc2 = audioCtx.createOscillator();
-          const osc3 = audioCtx.createOscillator();
-          const gainNode = audioCtx.createGain();
-          
-          osc1.type = 'sawtooth';
-          osc1.frequency.setValueAtTime(105, audioCtx.currentTime); // Deep resonant low frequency
-          
-          osc2.type = 'square';
-          osc2.frequency.setValueAtTime(110, audioCtx.currentTime); // Strong electronic buzz timbre
-          
-          osc3.type = 'sawtooth';
-          osc3.frequency.setValueAtTime(160, audioCtx.currentTime); // Mid-high frequency overtone
-          
-          // Gentle envelope filter to shape the buzz attack and trail decay
-          const filter = audioCtx.createBiquadFilter();
-          filter.type = 'lowpass';
-          filter.frequency.setValueAtTime(800, audioCtx.currentTime);
-          
-          gainNode.gain.setValueAtTime(0.35, audioCtx.currentTime);
-          gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 1.8); // Natural 1.8s decay
-          
-          osc1.connect(filter);
-          osc2.connect(filter);
-          osc3.connect(filter);
-          filter.connect(gainNode);
-          gainNode.connect(audioCtx.destination);
-          
-          osc1.start();
-          osc2.start();
-          osc3.start();
-          
-          osc1.stop(audioCtx.currentTime + 1.8);
-          osc2.stop(audioCtx.currentTime + 1.8);
-          osc3.stop(audioCtx.currentTime + 1.8);
+          if (soundId === 'horn') {
+            // Main physical low-frequency gym buzzer profile
+            const osc1 = audioCtx.createOscillator();
+            const osc2 = audioCtx.createOscillator();
+            const osc3 = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+            
+            osc1.type = 'sawtooth';
+            osc1.frequency.setValueAtTime(105, audioCtx.currentTime);
+            osc2.type = 'square';
+            osc2.frequency.setValueAtTime(110, audioCtx.currentTime);
+            osc3.type = 'sawtooth';
+            osc3.frequency.setValueAtTime(160, audioCtx.currentTime);
+            
+            const filter = audioCtx.createBiquadFilter();
+            filter.type = 'lowpass';
+            filter.frequency.setValueAtTime(800, audioCtx.currentTime);
+            
+            gainNode.gain.setValueAtTime(0.35, audioCtx.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 1.8);
+            
+            osc1.connect(filter);
+            osc2.connect(filter);
+            osc3.connect(filter);
+            filter.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+            
+            osc1.start(); osc2.start(); osc3.start();
+            osc1.stop(audioCtx.currentTime + 1.8);
+            osc2.stop(audioCtx.currentTime + 1.8);
+            osc3.stop(audioCtx.currentTime + 1.8);
+          } 
+          else if (soundId === 'airhorn') {
+            // Classic detuned high-intensity stadium airhorn double-blast
+            const playBlast = (startOffset, duration) => {
+              const osc1 = audioCtx.createOscillator();
+              const osc2 = audioCtx.createOscillator();
+              const gainNode = audioCtx.createGain();
+              
+              osc1.type = 'sawtooth';
+              osc1.frequency.setValueAtTime(320, audioCtx.currentTime + startOffset);
+              osc2.type = 'sawtooth';
+              osc2.frequency.setValueAtTime(324, audioCtx.currentTime + startOffset);
+              
+              gainNode.gain.setValueAtTime(0, audioCtx.currentTime + startOffset);
+              gainNode.gain.linearRampToValueAtTime(0.3, audioCtx.currentTime + startOffset + 0.05);
+              gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + startOffset + duration);
+              
+              osc1.connect(gainNode);
+              osc2.connect(gainNode);
+              gainNode.connect(audioCtx.destination);
+              
+              osc1.start(audioCtx.currentTime + startOffset);
+              osc2.start(audioCtx.currentTime + startOffset);
+              osc1.stop(audioCtx.currentTime + startOffset + duration);
+              osc2.stop(audioCtx.currentTime + startOffset + duration);
+            };
+            
+            playBlast(0, 0.6);
+            playBlast(0.7, 0.9);
+          } 
+          else if (soundId === 'whistle') {
+            // High-pitched referee whistle with dynamic frequency modulation (vibrato)
+            const osc = audioCtx.createOscillator();
+            const mod = audioCtx.createOscillator();
+            const modGain = audioCtx.createGain();
+            const gainNode = audioCtx.createGain();
+            
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(2200, audioCtx.currentTime); // High pierce whistle
+            
+            mod.type = 'sine';
+            mod.frequency.setValueAtTime(35, audioCtx.currentTime); // Rapid whistle rattle
+            modGain.gain.setValueAtTime(180, audioCtx.currentTime); // Pitch swing depth
+            
+            gainNode.gain.setValueAtTime(0, audioCtx.currentTime);
+            gainNode.gain.linearRampToValueAtTime(0.25, audioCtx.currentTime + 0.05);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 1.2);
+            
+            mod.connect(modGain);
+            modGain.connect(osc.frequency);
+            osc.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+            
+            mod.start();
+            osc.start();
+            mod.stop(audioCtx.currentTime + 1.2);
+            osc.stop(audioCtx.currentTime + 1.2);
+          } 
+          else if (soundId === 'defense') {
+            // Synchronized synthetic basketball floor beat & clap routine (DUM-DUM-CLAP!)
+            const playBeats = () => {
+              const playBassDrum = (time) => {
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(150, time);
+                osc.frequency.exponentialRampToValueAtTime(0.01, time + 0.15);
+                gain.gain.setValueAtTime(0.4, time);
+                gain.gain.exponentialRampToValueAtTime(0.01, time + 0.15);
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.start(time);
+                osc.stop(time + 0.16);
+              };
+
+              const playClap = (time) => {
+                // Synthesized white-noise clap
+                const bufferSize = audioCtx.sampleRate * 0.15;
+                const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+                const data = buffer.getChannelData(0);
+                for (let i = 0; i < bufferSize; i++) {
+                  data[i] = Math.random() * 2 - 1;
+                }
+                const noise = audioCtx.createBufferSource();
+                noise.buffer = buffer;
+                
+                const filter = audioCtx.createBiquadFilter();
+                filter.type = 'bandpass';
+                filter.frequency.setValueAtTime(1000, time);
+                
+                const gain = audioCtx.createGain();
+                gain.gain.setValueAtTime(0.25, time);
+                gain.gain.exponentialRampToValueAtTime(0.01, time + 0.15);
+                
+                noise.connect(filter);
+                filter.connect(gain);
+                gain.connect(audioCtx.destination);
+                noise.start(time);
+                noise.stop(time + 0.16);
+              };
+
+              // Schedule the full stadium chant sequence over 2 seconds
+              const start = audioCtx.currentTime;
+              playBassDrum(start);
+              playBassDrum(start + 0.3);
+              playClap(start + 0.6);
+              
+              playBassDrum(start + 1.0);
+              playBassDrum(start + 1.3);
+              playClap(start + 1.6);
+            };
+            playBeats();
+          } 
+          else if (soundId === 'charge') {
+            // Retro organ charge fanfare melody
+            const playNote = (freq, startOffset, duration) => {
+              const osc = audioCtx.createOscillator();
+              const gain = audioCtx.createGain();
+              osc.type = 'triangle'; // Organ-like mellow sound
+              osc.frequency.setValueAtTime(freq, audioCtx.currentTime + startOffset);
+              gain.gain.setValueAtTime(0, audioCtx.currentTime + startOffset);
+              gain.gain.linearRampToValueAtTime(0.2, audioCtx.currentTime + startOffset + 0.02);
+              gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + startOffset + duration);
+              
+              osc.connect(gain);
+              gain.connect(audioCtx.destination);
+              
+              osc.start(audioCtx.currentTime + startOffset);
+              osc.stop(audioCtx.currentTime + startOffset + duration);
+            };
+            
+            // "Charge!" Melody Notes: G4, C5, E5, G5... E5, G5!
+            playNote(392, 0, 0.15);     // G4
+            playNote(523, 0.18, 0.15);  // C5
+            playNote(659, 0.36, 0.15);  // E5
+            playNote(784, 0.54, 0.25);  // G5
+            playNote(659, 0.85, 0.15);  // E5
+            playNote(784, 1.05, 0.6);   // G5 (Longer build)
+          } 
+          else if (soundId === 'hype') {
+            // Classic descending synth laser swoop for big baskets or rally points
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = 'sawtooth';
+            osc.frequency.setValueAtTime(1500, audioCtx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(150, audioCtx.currentTime + 1.2);
+            
+            gain.gain.setValueAtTime(0.25, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 1.2);
+            
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            
+            osc.start();
+            osc.stop(audioCtx.currentTime + 1.2);
+          }
         } catch (synthErr) {
-          console.error("Synthesizer fallback crashed.", synthErr);
+          console.error("Synthesizer sound effect playback crashed:", synthErr);
         }
       };
 
-      // Web Audio / File Gym Buzzer Player with dynamic audio source tracking and synthesizer fallback
-      const triggerGymBuzzer = () => {
+      // Unified trigger for both standard soundboard files and modular synth fallbacks
+      const triggerSoundboardSound = (soundId) => {
         try {
-          const audio = new Audio("Buzzer Sound.mp3");
-          
-          // Intercept load/playback failures instantly to bypass browser sandbox & file missing errors
+          const match = SOUND_EFFECTS.find(s => s.id === soundId);
+          if (!match) return;
+
+          // Attempt HTML5 standard Audio loader first
+          const audio = new Audio(match.file);
           const playPromise = audio.play();
+          
           if (playPromise !== undefined) {
             playPromise.catch(err => {
-              console.warn("Local Buzzer Sound.mp3 failed to load/play. Activating dynamic synthesized gym horn fallback...");
-              playSynthesizedGymBuzzer();
+              console.warn(`Local standard file ${match.file} load/play failed on this network. Launching synthetic web sound engine...`);
+              playSynthesizedSound(soundId);
             });
           }
         } catch (e) {
-          console.warn("Absolute failure attempting to load relative HTML5 Audio object. Launching synthesizer core...");
-          playSynthesizedGymBuzzer();
+          console.warn(`Local standard file execution failed. Launching synthetic web sound engine fallback...`);
+          playSynthesizedSound(soundId);
         }
       };
 
@@ -426,9 +599,6 @@
 
         const runAuth = async () => {
           try {
-            // NEVER use custom token if custom Firebase configurations (local storage custom config or your hardcoded personal scoreboard-9b219 config) are running.
-            // Custom tokens are generated uniquely by the platform's specific server workspace and will ALWAYS fail on custom user-owned Firebase instances.
-            // This prevents the auth/custom-token-mismatch exception cleanly.
             const isLocalCustomConfig = localStorage.getItem('scoreboard_firebase_config');
             const isHardcodedPersonalConfig = firebaseConfig.projectId === "scoreboard-9b219";
             const isPlatformConfig = typeof __firebase_config !== 'undefined' && __firebase_config && !isLocalCustomConfig && !isHardcodedPersonalConfig;
@@ -501,13 +671,25 @@
               isTimerRunning: Boolean(data.isTimerRunning),
               timerLastUpdated: sanitizeNumber(data.timerLastUpdated, 0),
               lastBuzzerTriggered: sanitizeNumber(data.lastBuzzerTriggered, 0),
+              lastSoundTriggered: sanitizeNumber(data.lastSoundTriggered, 0),
+              activeSoundId: sanitizeString(data.activeSoundId, 'none')
             };
 
-            setGameState(sanitizedSnap);
+            // Capture state change dynamically so display monitors play real-time synchronized sounds
+            setGameState(prev => {
+              if (sanitizedSnap.lastSoundTriggered && sanitizedSnap.lastSoundTriggered !== prev.lastSoundTriggered) {
+                if (viewMode === 'display' && sanitizedSnap.activeSoundId !== 'none') {
+                  triggerSoundboardSound(sanitizedSnap.activeSoundId);
+                }
+              }
+              if (sanitizedSnap.lastBuzzerTriggered && sanitizedSnap.lastBuzzerTriggered !== prev.lastBuzzerTriggered) {
+                if (viewMode === 'display') {
+                  triggerSoundboardSound('horn');
+                }
+              }
+              return sanitizedSnap;
+            });
             
-            if (sanitizedSnap.lastBuzzerTriggered && sanitizedSnap.lastBuzzerTriggered !== gameState.lastBuzzerTriggered) {
-              triggerGymBuzzer();
-            }
           } else {
             setDoc(sessionDocRef, gameState);
           }
@@ -517,7 +699,7 @@
         });
 
         return () => unsubscribe();
-      }, [user, sessionId, hasAuthError]);
+      }, [user, sessionId, hasAuthError, viewMode]);
 
       // Millisecond-accurate local ticking clock handler (Skip ticking entirely if length is 0, like in Volleyball)
       useEffect(() => {
@@ -529,7 +711,9 @@
             setDisplayTime(remaining);
 
             if (remaining <= 0) {
-              triggerGymBuzzer();
+              if (viewMode === 'display') {
+                triggerSoundboardSound('horn');
+              }
               updateGameState({ isTimerRunning: false, timerSeconds: 0 });
             }
           }, 200);
@@ -541,7 +725,7 @@
         return () => {
           if (timerIntervalRef.current) clearInterval(timerIntervalRef.current);
         };
-      }, [gameState.isTimerRunning, gameState.timerSeconds, gameState.timerLastUpdated, gameState.timerLength]);
+      }, [gameState.isTimerRunning, gameState.timerSeconds, gameState.timerLastUpdated, gameState.timerLength, viewMode]);
 
       // Push State changes to Server or LocalStorage
       const updateGameState = async (newFields) => {
@@ -721,6 +905,18 @@
         }
       };
 
+      // Trigger a sound Board effect directly to the synchronized display screen
+      const triggerSoundboardSync = (soundId) => {
+        // If we are locally previewing / debugging as controller, trigger it instantly
+        if (viewMode === 'controller') {
+          triggerSoundboardSound(soundId);
+        }
+        updateGameState({
+          lastSoundTriggered: Date.now(),
+          activeSoundId: soundId
+        });
+      };
+
       // Timer Actions
       const toggleTimer = () => {
         if (gameState.isTimerRunning) {
@@ -773,7 +969,9 @@
       };
 
       const triggerManualBuzzer = () => {
-        triggerGymBuzzer();
+        if (viewMode === 'controller') {
+          triggerSoundboardSound('horn');
+        }
         updateGameState({ lastBuzzerTriggered: Date.now() });
       };
 
@@ -884,7 +1082,7 @@
                   
                   {/* Google Sheet URL Config */}
                   <div className="space-y-1.5">
-                    <label className="text-3xs uppercase font-extrabold text-slate-505 tracking-wider">Sheet API URL</label>
+                    <label className="text-3xs uppercase font-extrabold text-slate-555 tracking-wider">Sheet API URL</label>
                     <div className="relative">
                       <Icon name="link" className="absolute left-3 top-2.5 w-4 h-4 text-slate-400" />
                       <input 
@@ -997,6 +1195,32 @@
                   </button>
                 ))}
               </div>
+            </div>
+
+            {/* Gym Sync Soundboard Panel */}
+            <div className="bg-white p-4 rounded-xl border-2 border-slate-900 shadow-sm space-y-3">
+              <div className="flex items-center gap-1.5 text-slate-700">
+                <Icon name="bullhorn" className="w-5 h-5 text-rose-600" />
+                <span className="text-xs font-black uppercase tracking-wider">Gym Sound Board</span>
+              </div>
+              
+              <div className="grid grid-cols-3 gap-2">
+                {SOUND_EFFECTS.map((sound) => (
+                  <button
+                    key={sound.id}
+                    onClick={() => triggerSoundboardSync(sound.id)}
+                    className="flex flex-col items-center justify-center p-2.5 bg-slate-100 hover:bg-slate-200 border border-slate-300 rounded-xl transition-all active:scale-95 text-center group"
+                  >
+                    <Icon name={sound.icon} className="w-4 h-4 text-slate-500 group-hover:text-rose-600 transition-colors" />
+                    <span className="text-[10px] font-black uppercase text-slate-700 mt-1.5 tracking-tight break-words w-full">
+                      {sound.name}
+                    </span>
+                  </button>
+                ))}
+              </div>
+              <p className="text-[9px] text-slate-400 text-center font-medium leading-normal">
+                Tapping a sound instantly triggers playback on the connected Gym Display wall speakers!
+              </p>
             </div>
 
             {/* Quick Manual Score Override Button */}
@@ -1179,7 +1403,7 @@
             {/* Central Clock Controls (Only shown if active sport preset has time) */}
             {!isVolleyball && (
               <div className="bg-white border-2 border-slate-900 rounded-xl p-4 flex flex-col items-center space-y-4 shadow-sm animate-slideUp">
-                <span className="text-3xs font-black uppercase tracking-widest text-slate-505 font-sans">Match Clock Control</span>
+                <span className="text-3xs font-black uppercase tracking-widest text-slate-550 font-sans">Match Clock Control</span>
 
                 {/* Display Clock */}
                 <div className="text-5xl font-black font-digital tracking-widest text-amber-700 select-none bg-slate-55 py-3 px-8 rounded-xl border border-slate-200">
