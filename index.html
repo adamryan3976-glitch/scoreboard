@@ -69,41 +69,40 @@
     import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js';
     import { getFirestore, doc, setDoc, getDoc, collection, onSnapshot, updateDoc } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js';
 
-    // Fallbacks for Local Testing if Config is Missing
+    // Personal Firebase Project Credentials Configured!
     const defaultFirebaseConfig = {
-      apiKey: "",
-      authDomain: "temp-scoreboard.firebaseapp.com",
-      projectId: "temp-scoreboard",
-      storageBucket: "temp-scoreboard.appspot.com",
-      messagingSenderId: "123456",
-      appId: "1:123456:web:123456"
+      apiKey: "AIzaSyAWT9DRj6cuKDZ4dOVK4pC5AW5Nzy4zB3Q",
+      authDomain: "scoreboard-9b219.firebaseapp.com",
+      projectId: "scoreboard-9b219",
+      storageBucket: "scoreboard-9b219.firebasestorage.app",
+      messagingSenderId: "409487470675",
+      appId: "1:409487470675:web:e201939b1bc82978d4d6a6"
     };
 
     let firebaseConfig = defaultFirebaseConfig;
-    let usingRealFirebase = false;
+    let usingRealFirebase = true; // Auto-activated now!
 
-    if (typeof __firebase_config !== 'undefined' && __firebase_config) {
+    // Check if user has a customized setup stored locally
+    const savedConfig = localStorage.getItem('scoreboard_firebase_config');
+    if (savedConfig) {
       try {
-        firebaseConfig = JSON.parse(__firebase_config);
-        usingRealFirebase = true;
+        firebaseConfig = JSON.parse(savedConfig);
       } catch (e) {
-        console.warn("Could not parse dynamic Firebase config, operating in local-only / mock mode.", e);
+        console.warn("Could not parse saved custom Firebase config from localStorage", e);
       }
     }
 
-    const appId = typeof __app_id !== 'undefined' ? __app_id : 'school-scoreboard-app';
+    const appId = 'school-scoreboard-app';
 
-    // Initialize services if real config is present, otherwise simulate locally
+    // Initialize Firebase client context cleanly
     let app, auth, db;
-    if (usingRealFirebase) {
-      try {
-        app = initializeApp(firebaseConfig);
-        auth = getAuth(app);
-        db = getFirestore(app);
-      } catch (err) {
-        console.error("Firebase Initialization Error:", err);
-        usingRealFirebase = false;
-      }
+    try {
+      app = initializeApp(firebaseConfig);
+      auth = getAuth(app);
+      db = getFirestore(app);
+    } catch (err) {
+      console.error("Firebase Initialization Error:", err);
+      usingRealFirebase = false;
     }
 
     const { useState, useEffect, useRef } = React;
@@ -292,6 +291,7 @@
       const [viewMode, setViewMode] = useState('lobby'); // 'lobby', 'controller', 'display'
       const [sessionId, setSessionId] = useState('gym-main-court');
       const [errorMsg, setErrorMsg] = useState(null);
+      const [hasAuthError, setHasAuthError] = useState(false);
       
       // Google Apps Script API Integration States (Loaded from LocalStorage with default fallback)
       const [apiEndpoint, setApiEndpoint] = useState(() => {
@@ -301,6 +301,11 @@
       const [availableSports, setAvailableSports] = useState(DEFAULT_SPORTS);
       const [isImporting, setIsImporting] = useState(false);
       const [importSuccess, setImportSuccess] = useState(false);
+
+      // Local State for custom self-hosted Firebase config string
+      const [customFirebaseText, setCustomFirebaseText] = useState(() => {
+        return localStorage.getItem('scoreboard_firebase_config') || '';
+      });
 
       // Custom dialog modal states (Replaces raw window alerts/confirms)
       const [confirmModal, setConfirmModal] = useState({ show: false, title: '', message: '', onConfirm: null, isLogging: false });
@@ -412,7 +417,7 @@
         }
       };
 
-      // Authenticate with Firebase on Load
+      // Authenticate with Firebase on Load (Strict token guarding to avoid auth config errors)
       useEffect(() => {
         if (!usingRealFirebase) {
           setUser({ uid: 'mock-local-user-' + Math.random().toString(36).substr(2, 9) });
@@ -421,20 +426,36 @@
 
         const runAuth = async () => {
           try {
-            if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+            // NEVER use custom token if custom Firebase configurations (local storage custom config or your hardcoded personal scoreboard-9b219 config) are running.
+            // Custom tokens are generated uniquely by the platform's specific server workspace and will ALWAYS fail on custom user-owned Firebase instances.
+            // This prevents the auth/custom-token-mismatch exception cleanly.
+            const isLocalCustomConfig = localStorage.getItem('scoreboard_firebase_config');
+            const isHardcodedPersonalConfig = firebaseConfig.projectId === "scoreboard-9b219";
+            const isPlatformConfig = typeof __firebase_config !== 'undefined' && __firebase_config && !isLocalCustomConfig && !isHardcodedPersonalConfig;
+            const hasCustomToken = typeof __initial_auth_token !== 'undefined' && __initial_auth_token;
+            
+            if (isPlatformConfig && hasCustomToken) {
               await signInWithCustomToken(auth, __initial_auth_token);
             } else {
               await signInAnonymously(auth);
             }
           } catch (e) {
-            console.error("Auth Failure:", e);
-            setErrorMsg("Authentication Error. Operating in offline/local-only mode.");
+            console.error("Auth Failure Error Caught:", e);
+            setHasAuthError(true);
+            if (e.code === 'auth/configuration-not-found' || e.message.includes('configuration-not-found')) {
+              setErrorMsg("Anonymous Authentication is disabled in your Firebase Console. Follow the guide below to enable it so your devices can sync.");
+            } else {
+              setErrorMsg("Authentication Error: " + e.message);
+            }
           }
         };
 
         runAuth();
         const unsubscribe = onAuthStateChanged(auth, (usr) => {
-          if (usr) setUser(usr);
+          if (usr) {
+            setUser(usr);
+            setHasAuthError(false);
+          }
         });
 
         return () => unsubscribe();
@@ -442,7 +463,7 @@
 
       // Synchronize States with Firestore
       useEffect(() => {
-        if (!user) return;
+        if (!user || hasAuthError) return;
 
         if (!usingRealFirebase) {
           const savedLocal = localStorage.getItem(`scoreboard-${sessionId}`);
@@ -454,6 +475,7 @@
           return;
         }
 
+        // Rule 1: Strict collection paths followed precisely
         const sessionDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'sessions', sessionId);
 
         const unsubscribe = onSnapshot(sessionDocRef, (snapshot) => {
@@ -495,7 +517,7 @@
         });
 
         return () => unsubscribe();
-      }, [user, sessionId]);
+      }, [user, sessionId, hasAuthError]);
 
       // Millisecond-accurate local ticking clock handler (Skip ticking entirely if length is 0, like in Volleyball)
       useEffect(() => {
@@ -538,7 +560,7 @@
         const updated = { ...gameState, ...cleanFields };
         setGameState(updated);
 
-        if (!usingRealFirebase) {
+        if (!usingRealFirebase || hasAuthError) {
           localStorage.setItem(`scoreboard-${sessionId}`, JSON.stringify(updated));
           return;
         }
@@ -683,6 +705,22 @@
         }
       };
 
+      // Save custom Firebase config and automatically reload page context to connect
+      const handleSaveFirebaseConfig = () => {
+        if (customFirebaseText.trim()) {
+          try {
+            JSON.parse(customFirebaseText); // validate JSON structure
+            localStorage.setItem('scoreboard_firebase_config', customFirebaseText);
+            window.location.reload();
+          } catch (e) {
+            setErrorMsg("Invalid Firebase Config format. Please copy-paste the exact JSON object.");
+          }
+        } else {
+          localStorage.removeItem('scoreboard_firebase_config');
+          window.location.reload();
+        }
+      };
+
       // Timer Actions
       const toggleTimer = () => {
         if (gameState.isTimerRunning) {
@@ -751,8 +789,9 @@
 
       // Render LOBBY Page
       if (viewMode === 'lobby') {
+        const isDbOnline = usingRealFirebase && !hasAuthError;
         return (
-          <div className="min-h-screen flex flex-col items-center justify-center p-4 bg-slate-50 text-slate-900">
+          <div className="min-h-screen flex flex-col items-center justify-center p-4 bg-slate-50 text-slate-900 font-sans">
             <div className="max-w-md w-full bg-white border-2 border-slate-900 rounded-2xl shadow-2xl p-8 space-y-6">
               
               {/* Header Title */}
@@ -764,18 +803,38 @@
                 <h1 className="text-sm font-semibold text-slate-500">Customizable School Gym Scoreboard System</h1>
               </div>
 
-              {/* Status Banner indicating if Google Sheet is automatically synced on start */}
-              <div className={`p-3 rounded-xl border text-xs flex items-center justify-between transition-colors ${isImporting ? 'bg-blue-50 border-blue-200 text-blue-800' : 'bg-emerald-50 border-emerald-200 text-emerald-800'}`}>
+              {/* Status Banner indicating if Google Sheet and Firebase are active */}
+              <div className={`p-3 rounded-xl border text-xs flex items-center justify-between transition-colors ${isDbOnline ? 'bg-emerald-50 border-emerald-200 text-emerald-800' : 'bg-amber-50 border-amber-200 text-amber-800'}`}>
                 <div className="flex items-center gap-2">
-                  <div className={`w-2.5 h-2.5 rounded-full ${isImporting ? 'bg-blue-500 animate-ping' : 'bg-emerald-500'}`}></div>
+                  <div className={`w-2.5 h-2.5 rounded-full ${isDbOnline ? 'bg-emerald-500' : 'bg-amber-500 animate-pulse'}`}></div>
                   <span className="font-bold">
-                    {isImporting ? 'Syncing spreadsheet...' : 'Google Sheet Synced'}
+                    {isDbOnline ? 'Real-Time Sync Online' : 'Offline Mode (Local Only)'}
                   </span>
                 </div>
-                <span className="text-3xs font-extrabold bg-emerald-100 border border-emerald-300 text-emerald-700 px-2 py-0.5 rounded-full uppercase">
-                  Automatic
+                <span className={`text-3xs font-extrabold px-2 py-0.5 rounded-full uppercase border ${isDbOnline ? 'bg-emerald-100 border-emerald-300 text-emerald-700' : 'bg-amber-100 border-amber-300 text-amber-700'}`}>
+                  {isDbOnline ? 'Synced' : 'No Sync'}
                 </span>
               </div>
+
+              {/* Auth Configuration / Error Guidance System (Specifically addresses configuration-not-found) */}
+              {hasAuthError && (
+                <div className="bg-rose-50 border-2 border-rose-300 text-rose-900 p-4 rounded-xl text-xs space-y-2.5 animate-fadeIn">
+                  <div className="flex items-start gap-2 font-bold text-rose-700">
+                    <Icon name="alert-triangle" className="w-5 h-5 shrink-0 text-rose-600 mt-0.5" />
+                    <span>Anonymous Authentication Required</span>
+                  </div>
+                  <p className="leading-relaxed">
+                    Firestore requires a signed-in state, but <strong>Anonymous Authentication</strong> has not been enabled in your Firebase console yet.
+                  </p>
+                  <div className="bg-white/80 p-2.5 rounded-lg border border-rose-200 space-y-1 text-rose-950 font-semibold leading-relaxed">
+                    <p className="text-2xs uppercase tracking-wider font-extrabold text-rose-800">To fix this in 10 seconds:</p>
+                    <p>1. Go to your <a href="https://console.firebase.google.com" target="_blank" className="underline text-blue-600">Firebase Console</a>.</p>
+                    <p>2. Select <strong>Authentication</strong> in your project sidebar.</p>
+                    <p>3. Go to the <strong>Sign-in method</strong> tab.</p>
+                    <p>4. Click <strong>Add new provider</strong>, select <strong>Anonymous</strong>, click the <strong>Enable</strong> toggle, and hit <strong>Save</strong>.</p>
+                  </div>
+                </div>
+              )}
 
               {/* Config Board Session ID */}
               <div className="space-y-2">
@@ -786,7 +845,7 @@
                     type="text" 
                     value={sessionId} 
                     onChange={(e) => setSessionId(e.target.value.toLowerCase().replace(/[^a-z0-9-_]/g, ''))}
-                    className="w-full bg-slate-50 border-2 border-slate-200 rounded-xl py-2.5 pl-10 pr-4 text-slate-900 text-sm font-semibold tracking-wide focus:outline-none focus:border-rose-600 transition-colors"
+                    className="w-full bg-slate-55 border-2 border-slate-200 rounded-xl py-2.5 pl-10 pr-4 text-slate-900 text-sm font-semibold tracking-wide focus:outline-none focus:border-rose-600 transition-colors"
                     placeholder="Enter gym or session name"
                   />
                 </div>
@@ -801,7 +860,7 @@
                 >
                   <Icon name="gamepad-2" className="w-8 h-8" />
                   <span className="text-sm">Controller Panel</span>
-                  <span className="text-2xs text-rose-100 font-normal font-sans">On phone / tablet</span>
+                  <span className="text-2xs text-rose-100 font-normal">On phone / tablet</span>
                 </button>
 
                 <button 
@@ -810,7 +869,7 @@
                 >
                   <Icon name="monitor" className="w-8 h-8" />
                   <span className="text-sm">Gym Display</span>
-                  <span className="text-2xs text-blue-100 font-normal font-sans">On gym wall / TV</span>
+                  <span className="text-2xs text-blue-100 font-normal">On gym wall / TV</span>
                 </button>
               </div>
 
@@ -821,29 +880,53 @@
                   <span>Configure Settings (Admin Only)</span>
                 </summary>
                 
-                <div className="mt-3 p-4 bg-slate-50 border border-slate-200 rounded-xl space-y-3 animate-fadeIn">
+                <div className="mt-3 p-4 bg-slate-50 border border-slate-200 rounded-xl space-y-4 animate-fadeIn">
+                  
+                  {/* Google Sheet URL Config */}
                   <div className="space-y-1.5">
-                    <label className="text-3xs uppercase font-extrabold text-slate-505 tracking-wider">Apps Script API Endpoint</label>
+                    <label className="text-3xs uppercase font-extrabold text-slate-505 tracking-wider">Sheet API URL</label>
                     <div className="relative">
-                      <Icon name="link" className="absolute left-3 top-3 w-4 h-4 text-slate-400" />
+                      <Icon name="link" className="absolute left-3 top-2.5 w-4 h-4 text-slate-400" />
                       <input 
                         type="text" 
                         value={apiEndpoint} 
                         onChange={(e) => setApiEndpoint(e.target.value)}
-                        className="w-full bg-white border border-slate-200 rounded-lg py-2 pl-9 pr-3 text-slate-700 text-xs font-mono tracking-wide focus:outline-none focus:border-blue-600 transition-colors"
+                        className="w-full bg-white border border-slate-200 rounded-lg py-1.5 pl-9 pr-3 text-slate-700 text-xs font-mono tracking-wide focus:outline-none focus:border-blue-600 transition-colors"
                         placeholder="Paste Apps Script Web App exec URL..."
                       />
                     </div>
                   </div>
 
-                  <button 
-                    onClick={handleImportFromAPI}
-                    disabled={isImporting || !apiEndpoint}
-                    className="w-full bg-slate-200 hover:bg-slate-300 text-slate-700 text-xs py-2 rounded-lg font-bold flex items-center justify-center gap-1.5 transition-colors disabled:opacity-50"
-                  >
-                    <Icon name="refresh-cw" className="w-3.5 h-3.5" />
-                    <span>Force Re-Sync with Sheet</span>
-                  </button>
+                  {/* Dynamic Custom Firebase config for self-hosted syncing */}
+                  <div className="space-y-1.5">
+                    <label className="text-3xs uppercase font-extrabold text-slate-500 tracking-wider">Custom Real-Time Database Config (JSON)</label>
+                    <textarea 
+                      value={customFirebaseText}
+                      onChange={(e) => setCustomFirebaseText(e.target.value)}
+                      className="w-full bg-white border border-slate-200 rounded-lg py-2 px-3 text-slate-700 text-xs font-mono tracking-wide focus:outline-none focus:border-blue-600 h-24"
+                      placeholder='{"apiKey": "...", "authDomain": "...", "projectId": "...", "storageBucket": "...", "messagingSenderId": "...", "appId": "..."}'
+                    />
+                    <p className="text-[10px] text-slate-400 leading-normal">
+                      Create a free real-time Firebase Web Project, copy your Web App configuration JSON here, and save. Do this on both devices to enable global cross-device synchronization!
+                    </p>
+                    <button 
+                      onClick={handleSaveFirebaseConfig}
+                      className="w-full bg-slate-800 hover:bg-slate-900 text-white text-2xs py-2 rounded-lg font-bold transition-colors shadow-sm"
+                    >
+                      Save & Apply Database Config
+                    </button>
+                  </div>
+
+                  <div className="border-t border-slate-200 pt-3">
+                    <button 
+                      onClick={handleImportFromAPI}
+                      disabled={isImporting || !apiEndpoint}
+                      className="w-full bg-slate-200 hover:bg-slate-300 text-slate-700 text-xs py-2 rounded-lg font-bold flex items-center justify-center gap-1.5 transition-colors disabled:opacity-50"
+                    >
+                      <Icon name="refresh-cw" className="w-3.5 h-3.5" />
+                      <span>Force Re-Sync with Sheet</span>
+                    </button>
+                  </div>
 
                   {importSuccess && (
                     <p className="text-emerald-600 text-center font-bold text-2xs animate-pulse">
@@ -851,7 +934,7 @@
                     </p>
                   )}
 
-                  {errorMsg && (
+                  {errorMsg && !hasAuthError && (
                     <p className="text-rose-600 text-center font-semibold text-2xs leading-relaxed">
                       {sanitizeString(errorMsg)}
                     </p>
@@ -888,7 +971,7 @@
                 <span>Hub</span>
               </button>
               <div className="text-center">
-                <p className="text-3xs text-slate-505 uppercase tracking-widest font-extrabold">Controller Mode</p>
+                <p className="text-3xs text-slate-555 uppercase tracking-widest font-extrabold">Controller Mode</p>
                 <p className="text-xs font-black text-slate-900 uppercase tracking-wider font-digital">{sanitizeString(sessionId)}</p>
               </div>
               <button 
@@ -961,7 +1044,7 @@
                     <select
                       value={gameState.teamALogo}
                       onChange={(e) => updateGameState({ teamALogo: e.target.value })}
-                      className="w-full bg-slate-50 border border-slate-200 text-[10px] py-1 px-1.5 rounded font-semibold text-center focus:outline-none text-slate-700"
+                      className="w-full bg-slate-50 border-slate-200 text-[10px] py-1 px-1.5 rounded font-semibold text-center focus:outline-none text-slate-700"
                     >
                       {schoolALogos.map((logo, idx) => (
                         <option key={idx} value={logo}>Logo option {idx + 1}</option>
@@ -986,7 +1069,7 @@
                     </button>
                     <button 
                       onClick={() => updateGameState({ teamAScore: Math.max(0, gameState.teamAScore - 1) })}
-                      className="bg-slate-100 hover:bg-slate-200 px-3 rounded-lg text-sm font-black text-slate-500"
+                      className="bg-slate-100 hover:bg-slate-200 px-3 rounded-lg text-sm font-black text-slate-505"
                     >
                       -1
                     </button>
@@ -1040,7 +1123,7 @@
                     <select
                       value={gameState.teamBLogo}
                       onChange={(e) => updateGameState({ teamBLogo: e.target.value })}
-                      className="w-full bg-slate-50 border border-slate-200 text-[10px] py-1 px-1.5 rounded font-semibold text-center focus:outline-none text-slate-700"
+                      className="w-full bg-slate-50 border-slate-200 text-[10px] py-1 px-1.5 rounded font-semibold text-center focus:outline-none text-slate-700"
                     >
                       {schoolBLogos.map((logo, idx) => (
                         <option key={idx} value={logo}>Logo option {idx + 1}</option>
@@ -1065,7 +1148,7 @@
                     </button>
                     <button 
                       onClick={() => updateGameState({ teamBScore: Math.max(0, gameState.teamBScore - 1) })}
-                      className="bg-slate-100 hover:bg-slate-200 px-3 rounded-lg text-sm font-black text-slate-500"
+                      className="bg-slate-100 hover:bg-slate-200 px-3 rounded-lg text-sm font-black text-slate-55"
                     >
                       -1
                     </button>
@@ -1096,10 +1179,10 @@
             {/* Central Clock Controls (Only shown if active sport preset has time) */}
             {!isVolleyball && (
               <div className="bg-white border-2 border-slate-900 rounded-xl p-4 flex flex-col items-center space-y-4 shadow-sm animate-slideUp">
-                <span className="text-3xs font-black uppercase tracking-widest text-slate-505">Match Clock Control</span>
+                <span className="text-3xs font-black uppercase tracking-widest text-slate-505 font-sans">Match Clock Control</span>
 
                 {/* Display Clock */}
-                <div className="text-5xl font-black font-digital tracking-widest text-amber-700 select-none bg-slate-50 py-3 px-8 rounded-xl border border-slate-200">
+                <div className="text-5xl font-black font-digital tracking-widest text-amber-700 select-none bg-slate-55 py-3 px-8 rounded-xl border border-slate-200">
                   {formatTime(displayTime)}
                 </div>
 
@@ -1161,7 +1244,7 @@
                 <div className="flex items-center space-x-3 bg-slate-50 px-4 py-1.5 rounded-lg border border-slate-200">
                   <button 
                     onClick={() => updateGameState({ period: Math.max(1, gameState.period - 1) })}
-                    className="text-xs text-slate-505 font-bold hover:text-slate-800"
+                    className="text-xs text-slate-550 font-bold hover:text-slate-800"
                   >
                     -
                   </button>
@@ -1207,7 +1290,7 @@
                   
                   <div className="space-y-3">
                     <div>
-                      <label className="text-3xs uppercase tracking-wide font-black text-slate-505">Home Score ({sanitizeString(gameState.teamAName)})</label>
+                      <label className="text-3xs uppercase tracking-wide font-black text-slate-550">Home Score ({sanitizeString(gameState.teamAName)})</label>
                       <input 
                         type="number"
                         value={overrideModal.teamA}
@@ -1217,7 +1300,7 @@
                     </div>
 
                     <div>
-                      <label className="text-3xs uppercase tracking-wide font-black text-slate-505">Away Score ({sanitizeString(gameState.teamBName)})</label>
+                      <label className="text-3xs uppercase tracking-wide font-black text-slate-555">Away Score ({sanitizeString(gameState.teamBName)})</label>
                       <input 
                         type="number"
                         value={overrideModal.teamB}
@@ -1227,7 +1310,7 @@
                     </div>
 
                     <div>
-                      <label className="text-3xs uppercase tracking-wide font-black text-slate-505">Current {sanitizeString(gameState.periodName)}</label>
+                      <label className="text-3xs uppercase tracking-wide font-black text-slate-555">Current {sanitizeString(gameState.periodName)}</label>
                       <input 
                         type="number"
                         value={overrideModal.period}
@@ -1246,7 +1329,7 @@
                     </button>
                     <button 
                       onClick={handleSaveManualOverrides}
-                      className="bg-slate-900 hover:bg-slate-800 text-white py-2 px-4 rounded-lg text-xs font-bold"
+                      className="bg-slate-950 hover:bg-slate-800 text-white py-2 px-4 rounded-lg text-xs font-bold"
                     >
                       Apply Changes
                     </button>
@@ -1269,7 +1352,7 @@
                     {!confirmModal.isLogging && confirmModal.onConfirm && (
                       <button 
                         onClick={() => setConfirmModal({ show: false, title: '', message: '', onConfirm: null, isLogging: false })}
-                        className="bg-slate-100 hover:bg-slate-200 text-slate-550 py-2 px-4 rounded-lg text-xs font-semibold"
+                        className="bg-slate-100 hover:bg-slate-200 text-slate-55 py-2 px-4 rounded-lg text-xs font-semibold"
                       >
                         Cancel
                       </button>
