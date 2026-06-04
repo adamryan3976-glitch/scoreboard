@@ -3,15 +3,15 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Unified Gym Scoreboard</title>
+  <title>Winchester Knights Scoreboard Hub</title>
   
   <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
   
-  <!-- Google Fonts for digital aesthetic -->
+  <!-- Google Fonts for Medieval and Digital Aesthetic -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Inter:wght@300;400;600;800;900&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=MedievalSharp&family=Cinzel:wght@600;800;900&family=Orbitron:wght@700;900&family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
   
   <!-- Linking to your uploaded Knight Scoreboard.png in the same directory for a flawless icon render -->
   <link rel="icon" type="image/png" href="Knight Scoreboard.png">
@@ -28,8 +28,14 @@
   <style>
     body {
       font-family: 'Inter', sans-serif;
-      background-color: #ffffff;
-      color: #0f172a;
+      background-color: #0f121d; /* Deep medieval slate night background */
+      color: #f1f5f9;
+    }
+    .font-medieval {
+      font-family: 'MedievalSharp', cursive;
+    }
+    .font-royal {
+      font-family: 'Cinzel', serif;
     }
     .font-digital {
       font-family: 'Orbitron', sans-serif;
@@ -42,21 +48,44 @@
       -ms-overflow-style: none;
       scrollbar-width: none;
     }
-    /* Clean high-contrast projector shadows */
-    .projector-shadow {
-      box-shadow: 0 10px 40px -10px rgba(0, 0, 0, 0.15), 0 8px 24px -8px rgba(0, 0, 0, 0.1);
+    /* Parchment styling */
+    .bg-parchment {
+      background-color: #fcf9f2;
+      background-image: radial-gradient(#faf1df 1px, transparent 0), radial-gradient(#faf1df 1px, transparent 0);
+      background-size: 8px 8px;
+      background-position: 0 0, 4px 4px;
     }
-    .projector-border {
-      border: 3px solid #0f172a;
+    .text-iron {
+      color: #1e293b;
     }
-    .digital-amber {
-      color: #b45309; /* Deep amber for white wall projection contrast */
+    .border-iron {
+      border-color: #2c2f38;
     }
-    .digital-red {
-      color: #be123c; /* Deep rose-red */
+    .border-gold {
+      border-color: #ca8a04;
     }
-    .digital-blue {
-      color: #1d4ed8; /* Deep royal-blue */
+    
+    /* Elegant heavy drop shadows mimicking hanging banner signboards */
+    .banner-shadow {
+      box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.7), 0 15px 25px -10px rgba(0, 0, 0, 0.5);
+    }
+    .iron-border {
+      border: 4px solid #1e222b;
+      box-shadow: inset 0 0 8px rgba(0,0,0,0.2);
+    }
+    
+    /* Vivid high-contrast tournament team lighting */
+    .glowing-crimson {
+      color: #991b1b;
+      text-shadow: 0 0 12px rgba(239, 68, 68, 0.2);
+    }
+    .glowing-royal-blue {
+      color: #1e3a8a;
+      text-shadow: 0 0 12px rgba(59, 130, 246, 0.2);
+    }
+    .glowing-amber-glow {
+      color: #d97706;
+      text-shadow: 0 0 15px rgba(245, 158, 11, 0.35);
     }
   </style>
 </head>
@@ -81,9 +110,8 @@
     };
 
     let firebaseConfig = defaultFirebaseConfig;
-    let usingRealFirebase = true; // Auto-activated now!
+    let usingRealFirebase = true; 
 
-    // Check if user has a customized setup stored locally
     const savedConfig = localStorage.getItem('scoreboard_firebase_config');
     if (savedConfig) {
       try {
@@ -119,11 +147,11 @@
 
     // Default Fallback Schools if spreadsheet is empty/not configured
     const DEFAULT_SCHOOLS = [
-      { name: "Home Raiders", logo: "⚡", allLogos: ["⚡"] },
+      { name: "Winchester Knights", logo: "🛡️", allLogos: ["🛡️"] },
       { name: "Away Titans", logo: "🔥", allLogos: ["🔥"] },
       { name: "North Eagles", logo: "🦅", allLogos: ["🦅"] },
       { name: "South Panthers", logo: "🐆", allLogos: ["🐆"] },
-      { name: "East Warriors", logo: "🛡️", allLogos: ["🛡️"] },
+      { name: "East Warriors", logo: "⚔️", allLogos: ["⚔️"] },
       { name: "West Wolves", logo: "🐺", allLogos: ["🐺"] }
     ];
 
@@ -138,16 +166,45 @@
       { id: 'sad', name: 'Sad Trombone', icon: 'volume-2', file: 'Sad Trombone.mp3' }
     ];
 
-    // Custom Inline SVG Icon Component to bypass Lucide DOM-mutation bugs
     function Icon({ name, className = "w-5 h-5" }) {
       const icons = {
-        trophy: (
-          <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6" />
-            <path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18" />
-            <path d="M4 22h16" />
-            <path d="M10 14.66V17c0 .55-.45 1-1 1H4v2h16v-2h-5c-.55 0-1-.45-1-1v-2.34" />
-            <path d="M12 2a6 6 0 0 1 6 6v1H6V8a6 6 0 0 1 6-6z" />
+        swords: (
+          <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <polyline points="14.5 17.5 3 6 3 3 6 3 17.5 14.5" />
+            <line x1="13" y1="19" x2="19" y2="13" />
+            <line x1="16" y1="16" x2="20" y2="20" />
+            <line x1="19" y1="21" x2="21" y2="19" />
+            <polyline points="10 14 3 21" />
+            <line x1="3" y1="21" x2="6" y2="18" />
+          </svg>
+        ),
+        shield: (
+          <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+          </svg>
+        ),
+        castle: (
+          <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M21 11V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2H9V5a2 2 0 0 0-2-2H3a2 2 0 0 0-2 2v6" />
+            <path d="M21 11v8a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2v-8" />
+            <path d="M10 21v-4a2 2 0 0 1 4 0v4" />
+            <circle cx="6" cy="11" r="1" />
+            <circle cx="18" cy="11" r="1" />
+          </svg>
+        ),
+        crown: (
+          <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M2 4l3 12h14l3-12-6 7-4-7-4 7-6-7z" />
+            <path d="M3 20h18" />
+          </svg>
+        ),
+        scroll: (
+          <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+            <polyline points="14 2 14 8 20 8" />
+            <line x1="16" y1="13" x2="8" y2="13" />
+            <line x1="16" y1="17" x2="8" y2="17" />
+            <polyline points="10 9 9 9 8 9" />
           </svg>
         ),
         'alert-triangle': (
@@ -259,7 +316,7 @@
       return icons[name] || null;
     }
 
-    // Direct object-to-primitive sanitization guards to completely fix React Error #31
+    // Direct object-to-primitive sanitization guards
     const sanitizeString = (val, fallback = "") => {
       if (val === null || val === undefined) return fallback;
       if (typeof val === 'object') {
@@ -276,8 +333,7 @@
       return isNaN(num) ? fallback : num;
     };
 
-    // Safe component to render either string/emojis or modern dynamic web images
-    function TeamLogo({ value, fallbackEmoji = "🏆", className = "w-16 h-16 object-contain" }) {
+    function TeamLogo({ value, fallbackEmoji = "⚔️", className = "w-16 h-16 object-contain" }) {
       const cleanUrl = sanitizeString(value).trim();
       if (!cleanUrl) {
         return <span className="text-5xl select-none">{fallbackEmoji}</span>;
@@ -285,15 +341,14 @@
       const isUrl = cleanUrl.startsWith('http://') || cleanUrl.startsWith('https://') || cleanUrl.startsWith('data:image/');
       if (isUrl) {
         return (
-          <div className={`${className} flex items-center justify-center overflow-hidden bg-slate-50 border border-slate-200 rounded-2xl p-2`}>
+          <div className={`${className} flex items-center justify-center overflow-hidden bg-white/70 border-2 border-slate-700 rounded-2xl p-2`}>
             <img 
               src={cleanUrl} 
               alt="Team Badge" 
               className="max-w-full max-h-full object-contain"
               onError={(e) => {
-                // If sheet URL fails, hide broken img box and display fallback placeholder
                 e.target.style.display = 'none';
-                e.target.parentNode.innerHTML = `<span class="text-4xl select-none">🏆</span>`;
+                e.target.parentNode.innerHTML = `<span class="text-4xl select-none">🛡️</span>`;
               }}
             />
           </div>
@@ -310,7 +365,6 @@
       const [errorMsg, setErrorMsg] = useState(null);
       const [hasAuthError, setHasAuthError] = useState(false);
       
-      // Google Apps Script API Integration States (Loaded from LocalStorage with default fallback)
       const [apiEndpoint, setApiEndpoint] = useState(() => {
         return localStorage.getItem('scoreboard_api_url') || 'https://script.google.com/macros/s/AKfycbxqR4Q7hZGTQ73XaBbM4eBLII4MDbUWvfoh8iaQuIiKXUFBXxIH4AhW7nxg8zFj0WK_Bw/exec';
       });
@@ -319,22 +373,18 @@
       const [isImporting, setIsImporting] = useState(false);
       const [importSuccess, setImportSuccess] = useState(false);
 
-      // Local State for custom self-hosted Firebase config string
       const [customFirebaseText, setCustomFirebaseText] = useState(() => {
         return localStorage.getItem('scoreboard_firebase_config') || '';
       });
 
-      // Custom dialog modal states (Replaces raw window alerts/confirms)
       const [confirmModal, setConfirmModal] = useState({ show: false, title: '', message: '', onConfirm: null, isLogging: false });
-      
-      // Manual Override Score Pop-up States
       const [overrideModal, setOverrideModal] = useState({ show: false, teamA: 0, teamB: 0, period: 1 });
 
       // Scoreboard Synced State
       const [gameState, setGameState] = useState({
         sport: 'Basketball',
-        teamAName: 'Home Raiders',
-        teamALogo: '⚡',
+        teamAName: 'Winchester Knights',
+        teamALogo: '🛡️',
         teamAScore: 0,
         teamATimeouts: 3,
         teamBName: 'Away Titans',
@@ -351,33 +401,28 @@
         shotClock: 24,
         isShotClockRunning: false,
         lastBuzzerTriggered: 0, 
-        lastSoundTriggered: 0, // Track time of last triggered soundBoard sound
-        activeSoundId: 'none'  // Stores standard ID of active sound to play
+        lastSoundTriggered: 0, 
+        activeSoundId: 'none'  
       });
 
-      // Local Display Timer calculation refs
       const [displayTime, setDisplayTime] = useState(600);
       const timerIntervalRef = useRef(null);
 
-      // Save updated API URLs to LocalStorage automatically
       useEffect(() => {
         localStorage.setItem('scoreboard_api_url', apiEndpoint);
       }, [apiEndpoint]);
 
-      // Trigger automatic background synchronization with Google Sheet on app mount
       useEffect(() => {
         if (apiEndpoint) {
           handleImportFromAPI();
         }
       }, []);
 
-      // Synthesize rich Web Audio API fallbacks to play high-fidelity sound synthesis
       const playSynthesizedSound = (soundId) => {
         try {
           const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
           
           if (soundId === 'horn') {
-            // Main physical low-frequency gym buzzer profile
             const osc1 = audioCtx.createOscillator();
             const osc2 = audioCtx.createOscillator();
             const osc3 = audioCtx.createOscillator();
@@ -409,7 +454,6 @@
             osc3.stop(audioCtx.currentTime + 1.8);
           } 
           else if (soundId === 'airhorn') {
-            // Classic detuned high-intensity stadium airhorn double-blast
             const playBlast = (startOffset, duration) => {
               const osc1 = audioCtx.createOscillator();
               const osc2 = audioCtx.createOscillator();
@@ -438,11 +482,10 @@
             playBlast(0.7, 0.9);
           } 
           else if (soundId === 'charge') {
-            // Retro organ charge fanfare melody
             const playNote = (freq, startOffset, duration) => {
               const osc = audioCtx.createOscillator();
               const gain = audioCtx.createGain();
-              osc.type = 'triangle'; // Organ-like mellow sound
+              osc.type = 'triangle'; 
               osc.frequency.setValueAtTime(freq, audioCtx.currentTime + startOffset);
               gain.gain.setValueAtTime(0, audioCtx.currentTime + startOffset);
               gain.gain.linearRampToValueAtTime(0.2, audioCtx.currentTime + startOffset + 0.02);
@@ -455,16 +498,14 @@
               osc.stop(audioCtx.currentTime + startOffset + duration);
             };
             
-            // "Charge!" Melody Notes: G4, C5, E5, G5... E5, G5!
-            playNote(392, 0, 0.15);     // G4
-            playNote(523, 0.18, 0.15);  // C5
-            playNote(659, 0.36, 0.15);  // E5
-            playNote(784, 0.54, 0.25);  // G5
-            playNote(659, 0.85, 0.15);  // E5
-            playNote(784, 1.05, 0.6);   // G5 (Longer build)
+            playNote(392, 0, 0.15);     
+            playNote(523, 0.18, 0.15);  
+            playNote(659, 0.36, 0.15);  
+            playNote(784, 0.54, 0.25);  
+            playNote(659, 0.85, 0.15);  
+            playNote(784, 1.05, 0.6);   
           } 
           else if (soundId === 'letsgo') {
-            // Energetic rising hype cheer tune
             const playTone = (freq, startOffset, duration) => {
               const osc = audioCtx.createOscillator();
               const gain = audioCtx.createGain();
@@ -480,15 +521,14 @@
               osc.start(audioCtx.currentTime + startOffset);
               osc.stop(audioCtx.currentTime + startOffset + duration);
             };
-            playTone(523, 0, 0.15); // C5
+            playTone(523, 0, 0.15); 
             playTone(523, 0.2, 0.15);
-            playTone(587, 0.4, 0.15); // D5
-            playTone(659, 0.6, 0.15); // E5
+            playTone(587, 0.4, 0.15); 
+            playTone(659, 0.6, 0.15); 
             playTone(587, 0.8, 0.15);
-            playTone(659, 1.0, 0.4); // Long E5
+            playTone(659, 1.0, 0.4); 
           }
           else if (soundId === 'sad') {
-            // Descending wah-wah trombone synthesizer fallback
             const playSlide = (freqStart, freqEnd, startOffset, duration) => {
               const osc = audioCtx.createOscillator();
               const gain = audioCtx.createGain();
@@ -514,20 +554,18 @@
             playSlide(220, 180, 0, 0.4);
             playSlide(200, 165, 0.45, 0.4);
             playSlide(180, 150, 0.9, 0.4);
-            playSlide(150, 110, 1.35, 0.9); // Long final wahhhhhh
+            playSlide(150, 110, 1.35, 0.9); 
           }
         } catch (synthErr) {
           console.error("Synthesizer sound effect playback crashed:", synthErr);
         }
       };
 
-      // Unified trigger for both standard soundboard files and modular synth fallbacks
       const triggerSoundboardSound = (soundId) => {
         try {
           const match = SOUND_EFFECTS.find(s => s.id === soundId);
           if (!match) return;
 
-          // Attempt HTML5 standard Audio loader from relative path first
           const audio = new Audio(match.file);
           const playPromise = audio.play();
           
@@ -543,7 +581,7 @@
         }
       };
 
-      // Authenticate with Firebase on Load (Strict token guarding to avoid auth config errors)
+      // Authenticate with Firebase on Load
       useEffect(() => {
         if (!usingRealFirebase) {
           setUser({ uid: 'mock-local-user-' + Math.random().toString(36).substr(2, 9) });
@@ -552,9 +590,6 @@
 
         const runAuth = async () => {
           try {
-            // ONLY use custom token if we are running under the platform's dynamically injected Firebase config.
-            // If the user's custom config is active, always use standard anonymous sign-in.
-            // Check if '__initial_auth_token' is defined to prevent custom-token-mismatch on personal/custom setups.
             const isLocalCustomConfig = localStorage.getItem('scoreboard_firebase_config');
             const isHardcodedPersonalConfig = firebaseConfig.projectId === "scoreboard-9b219";
             const isPlatformConfig = typeof __firebase_config !== 'undefined' && __firebase_config && !isLocalCustomConfig && !isHardcodedPersonalConfig;
@@ -587,7 +622,6 @@
         return () => unsubscribe();
       }, []);
 
-      // Synchronize States with Firestore
       useEffect(() => {
         if (!user || hasAuthError) return;
 
@@ -601,18 +635,16 @@
           return;
         }
 
-        // Rule 1: Strict collection paths followed precisely
         const sessionDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'sessions', sessionId);
 
         const unsubscribe = onSnapshot(sessionDocRef, (snapshot) => {
           if (snapshot.exists()) {
             const data = snapshot.data();
             
-            // Map out & sanitize snap data to prevent any Firestore schema corruption from crashing views
             const sanitizedSnap = {
               sport: sanitizeString(data.sport, 'Basketball'),
-              teamAName: sanitizeString(data.teamAName, 'Home Raiders'),
-              teamALogo: sanitizeString(data.teamALogo, '⚡'),
+              teamAName: sanitizeString(data.teamAName, 'Winchester Knights'),
+              teamALogo: sanitizeString(data.teamALogo, '🛡️'),
               teamAScore: sanitizeNumber(data.teamAScore, 0),
               teamATimeouts: sanitizeNumber(data.teamATimeouts, 3),
               teamBName: sanitizeString(data.teamBName, 'Away Titans'),
@@ -631,7 +663,6 @@
               activeSoundId: sanitizeString(data.activeSoundId, 'none')
             };
 
-            // Capture state change dynamically so display monitors play real-time synchronized sounds
             setGameState(prev => {
               if (sanitizedSnap.lastSoundTriggered && sanitizedSnap.lastSoundTriggered !== prev.lastSoundTriggered) {
                 if (viewMode === 'display' && sanitizedSnap.activeSoundId !== 'none') {
@@ -657,7 +688,7 @@
         return () => unsubscribe();
       }, [user, sessionId, hasAuthError, viewMode]);
 
-      // Millisecond-accurate local ticking clock handler (Skip ticking entirely if length is 0, like in Volleyball)
+      // Ticking Clock Handler
       useEffect(() => {
         if (gameState.isTimerRunning && gameState.timerLength > 0) {
           timerIntervalRef.current = setInterval(() => {
@@ -685,7 +716,6 @@
 
       // Push State changes to Server or LocalStorage
       const updateGameState = async (newFields) => {
-        // Sanitize outbound modifications to protect DB structure
         const cleanFields = {};
         Object.keys(newFields).forEach(key => {
           if (typeof newFields[key] === 'string') {
@@ -715,7 +745,7 @@
         }
       };
 
-      // Import Configuration and Rosters from Google Sheet deployment Web App API
+      // Import configuration from sheet Web App API
       const handleImportFromAPI = async () => {
         if (!apiEndpoint) return;
         setIsImporting(true);
@@ -724,22 +754,21 @@
 
         try {
           const response = await fetch(`${apiEndpoint}?action=all`);
-          if (!response.ok) throw new Error("Could not access Google Apps Script deployment. Check execution authorization.");
+          if (!response.ok) throw new Error("Could not access Google Apps Script deployment.");
           
           const text = await response.text();
           let result;
           try {
             result = JSON.parse(text);
           } catch (parseErr) {
-            throw new Error("The Google Apps Script crashed during execution. Please open your Google Sheet, go to Extensions > Apps Script, and run 'doGet' manually to view the error log.");
+            throw new Error("The Google Apps Script crashed during execution.");
           }
 
           if (result.status === "success") {
             let schoolsList = importedSchools;
             if (result.schools && result.schools.length > 0) {
-              // Sanitize schools mapping safely and preserve allLogos
               schoolsList = result.schools.map(s => {
-                const legacyLogo = sanitizeString(s.logo, "🏆");
+                const legacyLogo = sanitizeString(s.logo, "🛡️");
                 return {
                   name: sanitizeString(s.name, "Unnamed School"),
                   logo: legacyLogo,
@@ -755,23 +784,22 @@
               setAvailableSports(sportsList);
             }
             
-            // Highly resilient team select initialization using safe-guards to prevent blank dropdown object rendering
             const rawSetupSport = result.setup?.sport;
             const rawSetupHome = result.setup?.homeTeam;
             const rawSetupAway = result.setup?.awayTeam;
             const rawSetupTime = result.setup?.time;
 
             const sport = sanitizeString(rawSetupSport, gameState.sport);
-            const defaultTeamA = sanitizeString(rawSetupHome, schoolsList[0] ? schoolsList[0].name : 'Home Raiders');
+            const defaultTeamA = sanitizeString(rawSetupHome, schoolsList[0] ? schoolsList[0].name : 'Winchester Knights');
             const defaultTeamB = sanitizeString(rawSetupAway, schoolsList[1] ? schoolsList[1].name : 'Away Titans');
             
-            const logoA = schoolsList.find(s => s.name === defaultTeamA)?.logo || '⚡';
+            const logoA = schoolsList.find(s => s.name === defaultTeamA)?.logo || '🛡️';
             const logoB = schoolsList.find(s => s.name === defaultTeamB)?.logo || '🔥';
 
             updateGameState({
               sport: sport,
               teamAName: defaultTeamA,
-              teamALogo: sanitizeString(logoA, '⚡'),
+              teamALogo: sanitizeString(logoA, '🛡️'),
               teamBName: defaultTeamB,
               teamBLogo: sanitizeString(logoB, '🔥'),
               timerSeconds: sanitizeNumber(rawSetupTime, gameState.timerSeconds),
@@ -784,13 +812,13 @@
             throw new Error(result.message || "API processing failure inside Apps Script.");
           }
         } catch (err) {
-          setErrorMsg(err.message || "Failed to contact Sheets API. Ensure it is deployed as 'Anyone' access.");
+          setErrorMsg(err.message || "Failed to contact Sheets API.");
         } finally {
           setIsImporting(false);
         }
       };
 
-      // Push historical match records to Google Sheet via Apps Script API
+      // Push match records to Google Sheet
       const handleLogGameToAPI = async () => {
         if (!apiEndpoint) return;
         setConfirmModal(prev => ({ ...prev, isLogging: true }));
@@ -804,7 +832,7 @@
           awayTeam: gameState.teamBName,
           awayScore: gameState.teamBScore,
           period: `${gameState.period}/${gameState.maxPeriods} (${gameState.periodName})`,
-          notes: `Logged automatically from unified control terminal.`
+          notes: `Logged automatically from Winchester control terminal.`
         };
 
         try {
@@ -817,11 +845,10 @@
           
           setConfirmModal({
             show: true,
-            title: 'Match Logged!',
-            message: 'Game data dispatch sequence completed successfully. Check the "Historic Data" tab in your Google Sheet.',
+            title: 'Tournament Logged!',
+            message: 'Game data dispatch sequence completed successfully. Check your "Historic Data" sheet.',
             onConfirm: () => {
               setConfirmModal({ show: false, title: '', message: '', onConfirm: null, isLogging: false });
-              // Reset scores
               updateGameState({
                 teamAScore: 0,
                 teamBScore: 0,
@@ -845,15 +872,14 @@
         }
       };
 
-      // Save custom Firebase config and automatically reload page context to connect
       const handleSaveFirebaseConfig = () => {
         if (customFirebaseText.trim()) {
           try {
-            JSON.parse(customFirebaseText); // validate JSON structure
+            JSON.parse(customFirebaseText); 
             localStorage.setItem('scoreboard_firebase_config', customFirebaseText);
             window.location.reload();
           } catch (e) {
-            setErrorMsg("Invalid Firebase Config format. Please copy-paste the exact JSON object.");
+            setErrorMsg("Invalid Firebase Config format.");
           }
         } else {
           localStorage.removeItem('scoreboard_firebase_config');
@@ -861,9 +887,7 @@
         }
       };
 
-      // Trigger a sound Board effect directly to the synchronized display screen
       const triggerSoundboardSync = (soundId) => {
-        // If we are locally previewing / debugging as controller, trigger it instantly
         if (viewMode === 'controller') {
           triggerSoundboardSound(soundId);
         }
@@ -931,7 +955,6 @@
         updateGameState({ lastBuzzerTriggered: Date.now() });
       };
 
-      // Save direct manual score/period adjustments
       const handleSaveManualOverrides = () => {
         updateGameState({
           teamAScore: Number(overrideModal.teamA),
@@ -941,158 +964,138 @@
         setOverrideModal({ show: false, teamA: 0, teamB: 0, period: 1 });
       };
 
-      // Render LOBBY Page
       if (viewMode === 'lobby') {
         const isDbOnline = usingRealFirebase && !hasAuthError;
         return (
-          <div className="min-h-screen flex flex-col items-center justify-center p-4 bg-slate-50 text-slate-900 font-sans">
-            <div className="max-w-md w-full bg-white border-2 border-slate-900 rounded-2xl shadow-2xl p-8 space-y-6">
+          <div className="min-h-screen flex flex-col items-center justify-center p-4 bg-slate-950 text-slate-100 font-sans relative">
+            
+            {/* Castle Wall Background Overlay Decoration */}
+            <div className="absolute inset-0 bg-[radial-gradient(#1e293b_1px,transparent_1px)] [background-size:24px_24px] opacity-10 pointer-events-none"></div>
+
+            <div className="max-w-md w-full bg-parchment border-4 border-amber-800 rounded-2xl shadow-2xl p-8 space-y-6 relative banner-shadow text-iron">
               
-              {/* Header Title */}
+              {/* Medieval Corner Rivets decoration */}
+              <div className="absolute top-2 left-2 w-3 h-3 rounded-full bg-amber-900 border border-amber-600"></div>
+              <div className="absolute top-2 right-2 w-3 h-3 rounded-full bg-amber-900 border border-amber-600"></div>
+              <div className="absolute bottom-2 left-2 w-3 h-3 rounded-full bg-amber-900 border border-amber-600"></div>
+              <div className="absolute bottom-2 right-2 w-3 h-3 rounded-full bg-amber-900 border border-amber-600"></div>
+
+              {/* Winchester Knight Heraldic Header */}
               <div className="text-center space-y-2">
-                <div className="flex items-center justify-center space-x-2 text-rose-600">
-                  <Icon name="trophy" className="w-8 h-8" />
-                  <span className="text-2xl font-black uppercase tracking-wider font-digital">Gameday Hub</span>
+                <div className="flex items-center justify-center space-x-2 text-amber-800">
+                  <Icon name="swords" className="w-10 h-10 animate-pulse text-amber-700" />
+                  <span className="text-3xl font-royal font-black uppercase tracking-wider">Winchester</span>
                 </div>
-                <h1 className="text-sm font-semibold text-slate-500">Customizable School Gym Scoreboard System</h1>
+                <div className="flex items-center justify-center gap-1 text-xs font-medieval font-black text-amber-900 tracking-widest uppercase">
+                  <span>⚔️ Court of Knights Scorekeeper ⚔️</span>
+                </div>
               </div>
 
-              {/* Status Banner indicating if Google Sheet and Firebase are active */}
-              <div className={`p-3 rounded-xl border text-xs flex items-center justify-between transition-colors ${isDbOnline ? 'bg-emerald-50 border-emerald-200 text-emerald-800' : 'bg-amber-50 border-amber-200 text-amber-800'}`}>
+              {/* Status Banner */}
+              <div className={`p-3 rounded-xl border text-xs flex items-center justify-between transition-colors ${isDbOnline ? 'bg-emerald-50 border-emerald-300 text-emerald-800' : 'bg-amber-100 border-amber-300 text-amber-900'}`}>
                 <div className="flex items-center gap-2">
-                  <div className={`w-2.5 h-2.5 rounded-full ${isDbOnline ? 'bg-emerald-500' : 'bg-amber-500 animate-pulse'}`}></div>
+                  <div className={`w-2.5 h-2.5 rounded-full ${isDbOnline ? 'bg-emerald-600 animate-pulse' : 'bg-amber-600'}`}></div>
                   <span className="font-bold">
-                    {isDbOnline ? 'Real-Time Sync Online' : 'Offline Mode (Local Only)'}
+                    {isDbOnline ? 'Ethereal Real-Time Sync Active' : 'Solitary Domain (Local Only)'}
                   </span>
                 </div>
-                <span className={`text-3xs font-extrabold px-2 py-0.5 rounded-full uppercase border ${isDbOnline ? 'bg-emerald-100 border-emerald-300 text-emerald-700' : 'bg-amber-100 border-amber-300 text-amber-700'}`}>
-                  {isDbOnline ? 'Synced' : 'No Sync'}
-                </span>
               </div>
 
-              {/* Auth Configuration / Error Guidance System (Specifically addresses configuration-not-found) */}
               {hasAuthError && (
-                <div className="bg-rose-50 border-2 border-rose-300 text-rose-900 p-4 rounded-xl text-xs space-y-2.5 animate-fadeIn">
-                  <div className="flex items-start gap-2 font-bold text-rose-700">
-                    <Icon name="alert-triangle" className="w-5 h-5 shrink-0 text-rose-600 mt-0.5" />
+                <div className="bg-rose-50 border-2 border-rose-400 text-rose-955 p-4 rounded-xl text-xs space-y-2 animate-fadeIn">
+                  <div className="flex items-start gap-2 font-bold text-rose-800">
+                    <Icon name="alert-triangle" className="w-5 h-5 shrink-0 text-rose-700 mt-0.5" />
                     <span>Anonymous Authentication Required</span>
                   </div>
-                  <p className="leading-relaxed">
-                    Firestore requires a signed-in state, but <strong>Anonymous Authentication</strong> has not been enabled in your Firebase console yet.
+                  <p className="leading-relaxed font-semibold">
+                    The Keep's gates are locked. Enable Anonymous authentication in your Firebase Console to establish visual synchronization.
                   </p>
-                  <div className="bg-white/80 p-2.5 rounded-lg border border-rose-200 space-y-1 text-rose-955 font-semibold leading-relaxed">
-                    <p className="text-2xs uppercase tracking-wider font-extrabold text-rose-800">To fix this in 10 seconds:</p>
-                    <p>1. Go to your <a href="https://console.firebase.google.com" target="_blank" className="underline text-blue-600">Firebase Console</a>.</p>
-                    <p>2. Select <strong>Authentication</strong> in your project sidebar.</p>
-                    <p>3. Go to the <strong>Sign-in method</strong> tab.</p>
-                    <p>4. Click <strong>Add new provider</strong>, select <strong>Anonymous</strong>, click the <strong>Enable</strong> toggle, and hit <strong>Save</strong>.</p>
-                  </div>
                 </div>
               )}
 
-              {/* Config Board Session ID */}
+              {/* Court Selection */}
               <div className="space-y-2">
-                <label className="text-xs font-bold uppercase tracking-wider text-slate-600">Gym Court Session ID</label>
+                <label className="text-xs font-black uppercase tracking-wider text-slate-700 flex items-center gap-1.5 font-medieval">
+                  <Icon name="shield" className="w-4 h-4 text-amber-800" />
+                  <span>Choose Your Court ID</span>
+                </label>
                 <div className="relative">
-                  <Icon name="key" className="absolute left-3 top-3.5 w-5 h-5 text-slate-400" />
+                  <Icon name="key" className="absolute left-3 top-3.5 w-5 h-5 text-amber-800" />
                   <input 
                     type="text" 
                     value={sessionId} 
                     onChange={(e) => setSessionId(e.target.value.toLowerCase().replace(/[^a-z0-9-_]/g, ''))}
-                    className="w-full bg-slate-55 border-2 border-slate-200 rounded-xl py-2.5 pl-10 pr-4 text-slate-900 text-sm font-semibold tracking-wide focus:outline-none focus:border-rose-600 transition-colors"
-                    placeholder="Enter gym or session name"
+                    className="w-full bg-white/80 border-2 border-amber-800 rounded-xl py-2.5 pl-10 pr-4 text-slate-900 text-sm font-bold tracking-wide focus:outline-none focus:border-amber-950 transition-colors"
+                    placeholder="e.g. tournament-keep"
                   />
                 </div>
-                <p className="text-2xs text-slate-505 font-medium">Using the same Session ID pairs your Controller and Display monitors!</p>
               </div>
 
-              {/* View Selector Options */}
+              {/* View Selector Options - Medieval Button Redesigns */}
               <div className="grid grid-cols-2 gap-4">
                 <button 
                   onClick={() => setViewMode('controller')}
-                  className="flex flex-col items-center justify-center p-5 bg-rose-600 hover:bg-rose-700 text-white rounded-xl font-bold transition-all transform hover:-translate-y-1 hover:shadow-lg hover:shadow-rose-300/40 gap-2"
+                  className="flex flex-col items-center justify-center p-5 bg-gradient-to-b from-amber-700 to-amber-900 hover:from-amber-600 hover:to-amber-800 text-white rounded-xl font-bold transition-all transform hover:-translate-y-1 border-b-4 border-amber-950 banner-shadow gap-2 text-center"
                 >
-                  <Icon name="gamepad-2" className="w-8 h-8" />
-                  <span className="text-sm">Controller Panel</span>
-                  <span className="text-2xs text-rose-100 font-normal">On phone / tablet</span>
+                  <Icon name="gamepad-2" className="w-8 h-8 text-amber-200" />
+                  <span className="text-xs font-medieval uppercase tracking-widest">Scribe's Panel</span>
+                  <span className="text-[9px] text-amber-100 font-normal">Command scores here</span>
                 </button>
 
                 <button 
                   onClick={() => setViewMode('display')}
-                  className="flex flex-col items-center justify-center p-5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold transition-all transform hover:-translate-y-1 hover:shadow-lg hover:shadow-blue-300/40 gap-2"
+                  className="flex flex-col items-center justify-center p-5 bg-gradient-to-b from-slate-800 to-slate-950 hover:from-slate-700 hover:to-slate-900 text-amber-300 rounded-xl font-bold transition-all transform hover:-translate-y-1 border-b-4 border-slate-950 banner-shadow gap-2 text-center"
                 >
-                  <Icon name="monitor" className="w-8 h-8" />
-                  <span className="text-sm">Gym Display</span>
-                  <span className="text-2xs text-blue-100 font-normal font-sans">On gym wall / TV</span>
+                  <Icon name="castle" className="w-8 h-8 text-amber-400" />
+                  <span className="text-xs font-medieval uppercase tracking-widest">Great Display</span>
+                  <span className="text-[9px] text-slate-300 font-normal">Show onto the Wall</span>
                 </button>
               </div>
 
-              {/* Discrete, Collapsible Advanced settings section */}
-              <details className="group mt-4 border-t border-slate-200 pt-4">
-                <summary className="text-xs text-slate-400 cursor-pointer select-none hover:text-slate-600 font-semibold flex items-center gap-1.5 transition-colors">
+              {/* Advanced settings */}
+              <details className="group mt-4 border-t border-amber-800/20 pt-4">
+                <summary className="text-xs text-amber-900/70 cursor-pointer select-none hover:text-amber-950 font-bold flex items-center gap-1.5 transition-colors">
                   <Icon name="settings" className="w-3.5 h-3.5 group-open:rotate-90 transition-transform duration-300" />
-                  <span>Configure Settings (Admin Only)</span>
+                  <span>Configure Citadel Settings</span>
                 </summary>
                 
-                <div className="mt-3 p-4 bg-slate-50 border border-slate-200 rounded-xl space-y-4 animate-fadeIn">
-                  
-                  {/* Google Sheet URL Config */}
+                <div className="mt-3 p-4 bg-amber-950/5 border border-amber-800/30 rounded-xl space-y-4 animate-fadeIn">
                   <div className="space-y-1.5">
-                    <label className="text-3xs uppercase font-extrabold text-slate-505 tracking-wider">Sheet API URL</label>
+                    <label className="text-[10px] uppercase font-bold text-slate-700">Google Scribe URL</label>
                     <div className="relative">
-                      <Icon name="link" className="absolute left-3 top-2.5 w-4 h-4 text-slate-400" />
+                      <Icon name="link" className="absolute left-3 top-2.5 w-4 h-4 text-amber-800" />
                       <input 
                         type="text" 
                         value={apiEndpoint} 
                         onChange={(e) => setApiEndpoint(e.target.value)}
-                        className="w-full bg-white border border-slate-200 rounded-lg py-1.5 pl-9 pr-3 text-slate-700 text-xs font-mono tracking-wide focus:outline-none focus:border-blue-600 transition-colors"
-                        placeholder="Paste Apps Script Web App exec URL..."
+                        className="w-full bg-white border border-amber-800 rounded-lg py-1.5 pl-9 pr-3 text-slate-700 text-xs font-mono tracking-wide focus:outline-none focus:border-amber-950 transition-colors"
                       />
                     </div>
                   </div>
 
-                  {/* Dynamic Custom Firebase config for self-hosted syncing */}
                   <div className="space-y-1.5">
-                    <label className="text-3xs uppercase font-extrabold text-slate-500 tracking-wider">Custom Real-Time Database Config (JSON)</label>
+                    <label className="text-[10px] uppercase font-bold text-slate-700">Custom Sanctuary Config (JSON)</label>
                     <textarea 
                       value={customFirebaseText}
                       onChange={(e) => setCustomFirebaseText(e.target.value)}
-                      className="w-full bg-white border border-slate-200 rounded-lg py-2 px-3 text-slate-700 text-xs font-mono tracking-wide focus:outline-none focus:border-blue-600 h-24"
-                      placeholder='{"apiKey": "...", "authDomain": "...", "projectId": "...", "storageBucket": "...", "messagingSenderId": "...", "appId": "..."}'
+                      className="w-full bg-white border border-amber-800 rounded-lg py-2 px-3 text-slate-700 text-xs font-mono focus:outline-none h-20"
                     />
-                    <p className="text-[10px] text-slate-400 leading-normal">
-                      Create a free real-time Firebase Web Project, copy your Web App configuration JSON here, and save. Do this on both devices to enable global cross-device synchronization!
-                    </p>
                     <button 
                       onClick={handleSaveFirebaseConfig}
-                      className="w-full bg-slate-800 hover:bg-slate-900 text-white text-2xs py-2 rounded-lg font-bold transition-colors shadow-sm"
+                      className="w-full bg-slate-800 hover:bg-slate-900 text-white text-xs py-2 rounded-lg font-bold"
                     >
-                      Save & Apply Database Config
+                      Save Sanctuary Database Config
                     </button>
                   </div>
 
-                  <div className="border-t border-slate-200 pt-3">
-                    <button 
-                      onClick={handleImportFromAPI}
-                      disabled={isImporting || !apiEndpoint}
-                      className="w-full bg-slate-200 hover:bg-slate-300 text-slate-700 text-xs py-2 rounded-lg font-bold flex items-center justify-center gap-1.5 transition-colors disabled:opacity-50"
-                    >
-                      <Icon name="refresh-cw" className="w-3.5 h-3.5" />
-                      <span>Force Re-Sync with Sheet</span>
-                    </button>
-                  </div>
-
-                  {importSuccess && (
-                    <p className="text-emerald-600 text-center font-bold text-2xs animate-pulse">
-                      Sheet Sync Successful! Loaded {importedSchools.length} Teams.
-                    </p>
-                  )}
-
-                  {errorMsg && !hasAuthError && (
-                    <p className="text-rose-600 text-center font-semibold text-2xs leading-relaxed">
-                      {sanitizeString(errorMsg)}
-                    </p>
-                  )}
+                  <button 
+                    onClick={handleImportFromAPI}
+                    disabled={isImporting}
+                    className="w-full bg-amber-800 hover:bg-amber-900 text-white text-xs py-2 rounded-lg font-bold flex items-center justify-center gap-1.5"
+                  >
+                    <Icon name="refresh-cw" className="w-3.5 h-3.5" />
+                    <span>Synchronize with Google Keep</span>
+                  </button>
                 </div>
               </details>
 
@@ -1101,51 +1104,47 @@
         );
       }
 
-      // Render CONTROLLER Page (For Phone/Tablet scorekeepers)
       if (viewMode === 'controller') {
         const isVolleyball = gameState.sport === 'Volleyball' || gameState.timerLength === 0;
-
-        // Extract available logos array for the currently selected Home and Away teams
         const currentSchoolA = importedSchools.find(s => s.name === gameState.teamAName);
-        const schoolALogos = currentSchoolA?.allLogos || (currentSchoolA?.logo ? [currentSchoolA.logo] : ['⚡']);
-
+        const schoolALogos = currentSchoolA?.allLogos || (currentSchoolA?.logo ? [currentSchoolA.logo] : ['🛡️']);
         const currentSchoolB = importedSchools.find(s => s.name === gameState.teamBName);
         const schoolBLogos = currentSchoolB?.allLogos || (currentSchoolB?.logo ? [currentSchoolB.logo] : ['🔥']);
         
         return (
-          <div className="min-h-screen bg-slate-50 text-slate-900 p-4 pb-12 flex flex-col max-w-lg mx-auto space-y-4 no-scrollbar">
+          <div className="min-h-screen bg-slate-950 text-iron p-4 pb-12 flex flex-col max-w-lg mx-auto space-y-4 no-scrollbar relative">
             
-            {/* Header / Session Switcher */}
-            <div className="flex justify-between items-center bg-white p-3 rounded-xl border-2 border-slate-900 shadow-sm">
+            {/* Header / Court Switcher */}
+            <div className="flex justify-between items-center bg-parchment p-3 rounded-xl border-2 border-amber-800 shadow-sm relative">
               <button 
                 onClick={() => setViewMode('lobby')}
-                className="flex items-center space-x-1.5 text-xs text-rose-600 bg-rose-50 hover:bg-rose-100 border border-rose-200 py-1 px-2.5 rounded-lg font-bold"
+                className="flex items-center space-x-1 text-2xs text-amber-900 bg-amber-100 hover:bg-amber-200 border border-amber-300 py-1 px-2.5 rounded-lg font-medieval font-black"
               >
                 <Icon name="arrow-left" className="w-3.5 h-3.5" />
-                <span>Hub</span>
+                <span>Return</span>
               </button>
               <div className="text-center">
-                <p className="text-3xs text-slate-555 uppercase tracking-widest font-extrabold">Controller Mode</p>
-                <p className="text-xs font-black text-slate-900 uppercase tracking-wider font-digital">{sanitizeString(sessionId)}</p>
+                <p className="text-[9px] text-amber-800 uppercase tracking-widest font-black font-medieval">Citadel Controller</p>
+                <p className="text-xs font-black text-slate-900 uppercase font-royal tracking-wider">{sanitizeString(sessionId)}</p>
               </div>
               <button 
                 onClick={triggerManualBuzzer}
-                className="bg-amber-500 hover:bg-amber-600 text-white border-b-4 border-amber-800 active:border-b-0 py-1 px-2.5 rounded-lg text-xs font-black uppercase tracking-wider flex items-center space-x-1"
+                className="bg-amber-600 hover:bg-amber-700 text-white border-b-4 border-amber-900 active:border-b-0 py-1.5 px-3 rounded-lg text-2xs font-medieval font-black uppercase flex items-center space-x-1"
               >
-                <Icon name="volume-2" className="w-3.5 h-3.5 animate-pulse" />
-                <span>Buzz</span>
+                <Icon name="volume-2" className="w-3.5 h-3.5" />
+                <span>Horn</span>
               </button>
             </div>
 
             {/* Quick Sport Selector Presets */}
-            <div className="bg-white p-3 rounded-xl border-2 border-slate-900 shadow-sm space-y-2 animate-fadeIn">
-              <span className="text-2xs font-bold uppercase text-slate-505 tracking-wider">Sport Ruleset Preset</span>
-              <div className="grid grid-cols-4 gap-1.5">
+            <div className="bg-parchment p-3 rounded-xl border-2 border-amber-800 shadow-sm space-y-2">
+              <span className="text-[10px] font-medieval font-black uppercase text-amber-900 tracking-wider">Tournament Discipline Ruleset</span>
+              <div className="grid grid-cols-5 gap-1">
                 {availableSports.map(s => (
                   <button 
                     key={s} 
                     onClick={() => handleSportChange(s)}
-                    className={`py-1 rounded-lg font-black text-2xs transition-all ${gameState.sport === s ? 'bg-rose-600 text-white shadow-sm' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}
+                    className={`py-1 rounded-lg font-bold text-[10px] uppercase tracking-tighter ${gameState.sport === s ? 'bg-amber-800 text-white' : 'bg-amber-950/5 text-amber-900 hover:bg-amber-100'}`}
                   >
                     {sanitizeString(s)}
                   </button>
@@ -1153,33 +1152,29 @@
               </div>
             </div>
 
-            {/* Gym Sync Soundboard Panel with updated files from GitHub */}
-            <div className="bg-white p-4 rounded-xl border-2 border-slate-900 shadow-sm space-y-3">
-              <div className="flex items-center gap-1.5 text-slate-700">
-                <Icon name="bullhorn" className="w-5 h-5 text-rose-600" />
-                <span className="text-xs font-black uppercase tracking-wider">Gym Sound Board</span>
+            {/* Gym Sync Soundboard Panel */}
+            <div className="bg-parchment p-4 rounded-xl border-2 border-amber-800 shadow-sm space-y-3">
+              <div className="flex items-center gap-1.5 text-amber-900">
+                <Icon name="crown" className="w-5 h-5 text-amber-700" />
+                <span className="text-xs font-medieval font-black uppercase tracking-wider">Royal Sound Board Fanfares</span>
               </div>
               
-              <div className="grid grid-cols-3 gap-2">
+              <div className="grid grid-cols-5 gap-1.5">
                 {SOUND_EFFECTS.map((sound) => (
                   <button
                     key={sound.id}
                     onClick={() => triggerSoundboardSync(sound.id)}
-                    className="flex flex-col items-center justify-center p-2.5 bg-slate-100 hover:bg-slate-200 border border-slate-300 rounded-xl transition-all active:scale-95 text-center group"
+                    className="flex flex-col items-center justify-center p-2 bg-amber-900/5 hover:bg-amber-100 border border-amber-800/20 rounded-lg text-center"
                   >
-                    <Icon name={sound.icon} className="w-4 h-4 text-slate-500 group-hover:text-rose-600 transition-colors" />
-                    <span className="text-[10px] font-black uppercase text-slate-700 mt-1.5 tracking-tight break-words w-full">
-                      {sound.name}
+                    <span className="text-[9px] font-medieval font-black uppercase text-amber-900 tracking-tighter truncate w-full">
+                      {sound.name.replace('Stadium ', '').replace('Organ', '')}
                     </span>
                   </button>
                 ))}
               </div>
-              <p className="text-[9px] text-slate-400 text-center font-medium leading-normal">
-                Tapping a sound instantly triggers playback on the connected Gym Display wall speakers!
-              </p>
             </div>
 
-            {/* Quick Manual Score Override Button */}
+            {/* Override score board button */}
             <button
               onClick={() => setOverrideModal({
                 show: true,
@@ -1187,86 +1182,67 @@
                 teamB: gameState.teamBScore,
                 period: gameState.period
               })}
-              className="w-full bg-slate-900 hover:bg-slate-800 text-white py-2 rounded-xl text-xs font-black uppercase tracking-wider flex items-center justify-center space-x-1.5 shadow-md"
+              className="w-full bg-amber-900 hover:bg-amber-950 border-b-4 border-amber-955 text-amber-100 py-2.5 rounded-xl text-xs font-medieval font-black uppercase tracking-widest flex items-center justify-center space-x-1.5 shadow-md"
             >
               <Icon name="edit" className="w-4 h-4" />
-              <span>Directly Type / Override Scores</span>
+              <span>Scribe Custom scores</span>
             </button>
 
             {/* Main Scoreboard Action Panel */}
             <div className="grid grid-cols-2 gap-4">
               
-              {/* Home / Team A Controller */}
-              <div className="bg-white border-2 border-slate-900 rounded-xl p-3 flex flex-col items-center space-y-3 shadow-sm">
-                <span className="text-3xs font-black uppercase tracking-widest text-slate-400">Home Team (Left)</span>
+              {/* Home / Team A Controller - Styled Crimson Keep */}
+              <div className="bg-parchment border-2 border-red-800 rounded-xl p-3 flex flex-col items-center space-y-3 shadow-sm relative">
+                <div className="absolute top-0 inset-x-0 h-1 bg-red-800 rounded-t-xl"></div>
+                <span className="text-[9px] font-medieval font-black uppercase tracking-widest text-red-800">Crimson House (Left)</span>
                 
-                {/* Team Dropdown Select */}
                 <select 
                   value={gameState.teamAName}
                   onChange={(e) => {
                     const sel = importedSchools.find(s => s.name === e.target.value);
                     updateGameState({
                       teamAName: e.target.value,
-                      teamALogo: sel ? sel.logo : '⚡'
+                      teamALogo: sel ? sel.logo : '🛡️'
                     });
                   }}
-                  className="w-full bg-slate-100 border border-slate-200 text-xs py-1.5 px-2 rounded font-bold text-center focus:outline-none text-slate-800"
+                  className="w-full bg-white border border-amber-800 text-xs py-1 px-1 rounded font-bold text-center text-slate-800"
                 >
                   {importedSchools.map((s, idx) => (
                     <option key={idx} value={s.name}>{sanitizeString(s.name)}</option>
                   ))}
                 </select>
 
-                {/* Home Logo Selection Menu (Only shown if school has multiple logos) */}
-                {schoolALogos.length > 1 && (
-                  <div className="w-full flex flex-col space-y-0.5">
-                    <label className="text-[9px] uppercase tracking-wider font-extrabold text-slate-400 text-center">Select Variant Logo</label>
-                    <select
-                      value={gameState.teamALogo}
-                      onChange={(e) => updateGameState({ teamALogo: e.target.value })}
-                      className="w-full bg-slate-50 border-slate-200 text-[10px] py-1 px-1.5 rounded font-semibold text-center focus:outline-none text-slate-700"
-                    >
-                      {schoolALogos.map((logo, idx) => (
-                        <option key={idx} value={logo}>Logo option {idx + 1}</option>
-                      ))}
-                    </select>
-                  </div>
-                )}
-
-                <div className="text-center relative flex flex-col items-center min-h-[110px] justify-center">
-                  <TeamLogo value={gameState.teamALogo} fallbackEmoji="⚡" className="w-14 h-14" />
-                  <div className="text-6xl font-black font-digital text-red-600 tracking-wider select-none mt-1">{sanitizeNumber(gameState.teamAScore)}</div>
+                <div className="text-center relative flex flex-col items-center min-h-[90px] justify-center">
+                  <TeamLogo value={gameState.teamALogo} fallbackEmoji="🛡️" className="w-12 h-12" />
+                  <div className="text-5xl font-black font-digital text-red-800 tracking-wider mt-1">{sanitizeNumber(gameState.teamAScore)}</div>
                 </div>
 
-                {/* Dynamic Sport-Specific Score Controls */}
-                <div className="flex flex-col w-full space-y-1.5">
-                  <div className="flex space-x-1.5">
+                <div className="flex flex-col w-full space-y-1">
+                  <div className="flex space-x-1">
                     <button 
                       onClick={() => updateGameState({ teamAScore: gameState.teamAScore + 1 })}
-                      className="flex-1 bg-red-600 hover:bg-red-700 text-white py-2.5 rounded-lg text-sm font-black border-b-2 border-red-800 active:border-b-0 active:mt-0.5"
+                      className="flex-1 bg-red-700 hover:bg-red-800 text-white py-2 rounded-lg text-xs font-black border-b-2 border-red-950"
                     >
                       +1
                     </button>
                     <button 
                       onClick={() => updateGameState({ teamAScore: Math.max(0, gameState.teamAScore - 1) })}
-                      className="bg-slate-100 hover:bg-slate-200 px-3 rounded-lg text-sm font-black text-slate-505"
+                      className="bg-amber-900/10 hover:bg-amber-900/20 px-2 rounded-lg text-xs font-black text-slate-800"
                     >
                       -1
                     </button>
                   </div>
-                  
-                  {/* Additional point buttons (Only shown if sport supports multiple points e.g. Basketball) */}
                   {!isVolleyball && (
-                    <div className="flex space-x-1.5">
+                    <div className="flex space-x-1">
                       <button 
                         onClick={() => updateGameState({ teamAScore: gameState.teamAScore + 2 })}
-                        className="flex-1 bg-red-100 hover:bg-red-200 text-red-700 py-1.5 rounded-md text-xs font-bold border border-red-200"
+                        className="flex-1 bg-red-50 hover:bg-red-100 text-red-900 py-1 rounded text-[10px] font-black border border-red-200"
                       >
                         +2
                       </button>
                       <button 
                         onClick={() => updateGameState({ teamAScore: gameState.teamAScore + 3 })}
-                        className="flex-1 bg-red-200 hover:bg-red-300 text-red-800 py-1.5 rounded-md text-xs font-bold border border-red-300"
+                        className="flex-1 bg-red-100 hover:bg-red-200 text-red-950 py-1 rounded text-[10px] font-black border border-red-300"
                       >
                         +3
                       </button>
@@ -1275,11 +1251,11 @@
                 </div>
               </div>
 
-              {/* Away / Team B Controller */}
-              <div className="bg-white border-2 border-slate-900 rounded-xl p-3 flex flex-col items-center space-y-3 shadow-sm">
-                <span className="text-3xs font-black uppercase tracking-widest text-slate-400">Away Team (Right)</span>
+              {/* Away / Team B Controller - Styled Royal Kingdom */}
+              <div className="bg-parchment border-2 border-blue-900 rounded-xl p-3 flex flex-col items-center space-y-3 shadow-sm relative">
+                <div className="absolute top-0 inset-x-0 h-1 bg-blue-900 rounded-t-xl"></div>
+                <span className="text-[9px] font-medieval font-black uppercase tracking-widest text-blue-800">Royal House (Right)</span>
 
-                {/* Team Dropdown Select */}
                 <select 
                   value={gameState.teamBName}
                   onChange={(e) => {
@@ -1289,63 +1265,44 @@
                       teamBLogo: sel ? sel.logo : '🔥'
                     });
                   }}
-                  className="w-full bg-slate-100 border border-slate-200 text-xs py-1.5 px-2 rounded font-bold text-center focus:outline-none text-slate-800"
+                  className="w-full bg-white border border-amber-800 text-xs py-1 px-1 rounded font-bold text-center text-slate-800"
                 >
                   {importedSchools.map((s, idx) => (
                     <option key={idx} value={s.name}>{sanitizeString(s.name)}</option>
                   ))}
                 </select>
 
-                {/* Away Logo Selection Menu (Only shown if school has multiple logos) */}
-                {schoolBLogos.length > 1 && (
-                  <div className="w-full flex flex-col space-y-0.5">
-                    <label className="text-[9px] uppercase tracking-wider font-extrabold text-slate-400 text-center">Select Variant Logo</label>
-                    <select
-                      value={gameState.teamBLogo}
-                      onChange={(e) => updateGameState({ teamBLogo: e.target.value })}
-                      className="w-full bg-slate-50 border-slate-200 text-[10px] py-1 px-1.5 rounded font-semibold text-center focus:outline-none text-slate-700"
-                    >
-                      {schoolBLogos.map((logo, idx) => (
-                        <option key={idx} value={logo}>Logo option {idx + 1}</option>
-                      ))}
-                    </select>
-                  </div>
-                )}
-
-                <div className="text-center relative flex flex-col items-center min-h-[110px] justify-center">
-                  <TeamLogo value={gameState.teamBLogo} fallbackEmoji="🔥" className="w-14 h-14" />
-                  <div className="text-6xl font-black font-digital text-blue-600 tracking-wider select-none mt-1">{sanitizeNumber(gameState.teamBScore)}</div>
+                <div className="text-center relative flex flex-col items-center min-h-[90px] justify-center">
+                  <TeamLogo value={gameState.teamBLogo} fallbackEmoji="🔥" className="w-12 h-12" />
+                  <div className="text-5xl font-black font-digital text-blue-900 tracking-wider mt-1">{sanitizeNumber(gameState.teamBScore)}</div>
                 </div>
 
-                {/* Score Controls */}
-                <div className="flex flex-col w-full space-y-1.5">
-                  <div className="flex space-x-1.5">
+                <div className="flex flex-col w-full space-y-1">
+                  <div className="flex space-x-1">
                     <button 
                       onClick={() => updateGameState({ teamBScore: gameState.teamBScore + 1 })}
-                      className="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-2.5 rounded-lg text-sm font-black border-b-2 border-blue-800 active:border-b-0 active:mt-0.5"
+                      className="flex-1 bg-blue-700 hover:bg-blue-800 text-white py-2 rounded-lg text-xs font-black border-b-2 border-blue-950"
                     >
                       +1
                     </button>
                     <button 
                       onClick={() => updateGameState({ teamBScore: Math.max(0, gameState.teamBScore - 1) })}
-                      className="bg-slate-100 hover:bg-slate-200 px-3 rounded-lg text-sm font-black text-slate-55"
+                      className="bg-amber-900/10 hover:bg-amber-900/20 px-2 rounded-lg text-xs font-black text-slate-800"
                     >
                       -1
                     </button>
                   </div>
-                  
-                  {/* Additional point buttons (Only shown if sport supports multiple points e.g. Basketball) */}
                   {!isVolleyball && (
-                    <div className="flex space-x-1.5">
+                    <div className="flex space-x-1">
                       <button 
                         onClick={() => updateGameState({ teamBScore: gameState.teamBScore + 2 })}
-                        className="flex-1 bg-blue-100 hover:bg-blue-200 text-blue-700 py-1.5 rounded-md text-xs font-bold border border-red-200"
+                        className="flex-1 bg-blue-50 hover:bg-blue-100 text-blue-900 py-1 rounded text-[10px] font-black border border-blue-200"
                       >
                         +2
                       </button>
                       <button 
                         onClick={() => updateGameState({ teamBScore: gameState.teamBScore + 3 })}
-                        className="flex-1 bg-blue-200 hover:bg-blue-300 text-blue-800 py-1.5 rounded-md text-xs font-bold border border-red-300"
+                        className="flex-1 bg-blue-100 hover:bg-blue-200 text-blue-950 py-1 rounded text-[10px] font-black border border-blue-300"
                       >
                         +3
                       </button>
@@ -1356,146 +1313,108 @@
 
             </div>
 
-            {/* Central Clock Controls (Only shown if active sport preset has time) */}
+            {}
             {!isVolleyball && (
-              <div className="bg-white border-2 border-slate-900 rounded-xl p-4 flex flex-col items-center space-y-4 shadow-sm animate-slideUp">
-                <span className="text-3xs font-black uppercase tracking-widest text-slate-550 font-sans">Match Clock Control</span>
+              <div className="bg-parchment border-2 border-amber-800 rounded-xl p-4 flex flex-col items-center space-y-4 shadow-sm relative">
+                <span className="text-[10px] font-medieval font-black uppercase tracking-widest text-amber-900">Hourglass of the Tournament</span>
 
-                {/* Display Clock */}
-                <div className="text-5xl font-black font-digital tracking-widest text-amber-700 select-none bg-slate-55 py-3 px-8 rounded-xl border border-slate-200">
+                <div className="text-5xl font-black font-digital tracking-widest text-amber-800 select-none bg-stone-900 text-amber-500 py-3 px-8 rounded-xl border-2 border-amber-700 shadow-inner">
                   {formatTime(displayTime)}
                 </div>
 
-                {/* Start Stop Reset Action Row */}
                 <div className="flex w-full space-x-2">
                   <button 
                     onClick={toggleTimer}
-                    className={`flex-1 py-3 px-4 rounded-xl font-black flex items-center justify-center space-x-1.5 transition-colors text-sm shadow-md ${gameState.isTimerRunning ? 'bg-red-600 hover:bg-red-700 text-white shadow-red-200' : 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-emerald-200'}`}
+                    className={`flex-1 py-3 px-4 rounded-xl font-medieval font-black flex items-center justify-center space-x-1.5 transition-colors text-xs shadow-md ${gameState.isTimerRunning ? 'bg-red-700 text-white' : 'bg-emerald-700 text-white'}`}
                   >
                     <Icon name={gameState.isTimerRunning ? "pause" : "play"} className="w-4 h-4" />
-                    <span>{gameState.isTimerRunning ? 'PAUSE CLOCK' : 'START CLOCK'}</span>
+                    <span>{gameState.isTimerRunning ? 'PAUSE HOURGLASS' : 'START HOURGLASS'}</span>
                   </button>
 
                   <button 
                     onClick={resetTimer}
-                    className="bg-slate-100 hover:bg-slate-200 p-3 rounded-xl text-slate-600 border border-slate-200 hover:text-slate-800 transition-colors"
-                    title="Reset Game Clock"
+                    className="bg-amber-100 hover:bg-amber-200 p-3 rounded-xl text-amber-800 border border-amber-300"
                   >
                     <Icon name="rotate-ccw" className="w-5 h-5" />
                   </button>
                 </div>
 
-                {/* Add / Subtract Minute modifiers */}
-                <div className="grid grid-cols-4 gap-1.5 w-full">
-                  <button 
-                    onClick={() => adjustTimer(60)}
-                    className="bg-slate-100 hover:bg-slate-200 text-2xs py-1.5 px-2 rounded-lg font-bold border border-slate-200 text-slate-600"
-                  >
-                    +1m
-                  </button>
-                  <button 
-                    onClick={() => adjustTimer(-60)}
-                    className="bg-slate-100 hover:bg-slate-200 text-2xs py-1.5 px-2 rounded-lg font-bold border border-slate-200 text-slate-600"
-                  >
-                    -1m
-                  </button>
-                  <button 
-                    onClick={() => adjustTimer(10)}
-                    className="bg-slate-100 hover:bg-slate-200 text-2xs py-1.5 px-2 rounded-lg font-bold border border-slate-200 text-slate-600"
-                  >
-                    +10s
-                  </button>
-                  <button 
-                    onClick={() => adjustTimer(-10)}
-                    className="bg-slate-100 hover:bg-slate-200 text-2xs py-1.5 px-2 rounded-lg font-bold border border-slate-200 text-slate-600"
-                  >
-                    -10s
-                  </button>
+                <div className="grid grid-cols-4 gap-1 w-full">
+                  <button onClick={() => adjustTimer(60)} className="bg-amber-900/5 hover:bg-amber-100 text-[9px] py-1 px-1 rounded font-bold text-amber-950">+1m</button>
+                  <button onClick={() => adjustTimer(-60)} className="bg-amber-900/5 hover:bg-amber-100 text-[9px] py-1 px-1 rounded font-bold text-amber-950">-1m</button>
+                  <button onClick={() => adjustTimer(10)} className="bg-amber-900/5 hover:bg-amber-100 text-[9px] py-1 px-1 rounded font-bold text-amber-950">+10s</button>
+                  <button onClick={() => adjustTimer(-10)} className="bg-amber-900/5 hover:bg-amber-100 text-[9px] py-1 px-1 rounded font-bold text-amber-950">-10s</button>
                 </div>
               </div>
             )}
 
             {/* Quarter / Period Panel */}
-            <div className="grid grid-cols-2 gap-4 bg-white border-2 border-slate-900 rounded-xl p-3.5 items-center shadow-sm">
-              
-              {/* Period control */}
+            <div className="grid grid-cols-2 gap-4 bg-parchment border-2 border-amber-800 rounded-xl p-3.5 items-center shadow-sm">
               <div className="flex flex-col items-center space-y-1.5">
-                <span className="text-3xs font-black uppercase tracking-widest text-slate-400">{sanitizeString(gameState.periodName)}</span>
-                <div className="flex items-center space-x-3 bg-slate-50 px-4 py-1.5 rounded-lg border border-slate-200">
-                  <button 
-                    onClick={() => updateGameState({ period: Math.max(1, gameState.period - 1) })}
-                    className="text-xs text-slate-550 font-bold hover:text-slate-800"
-                  >
-                    -
-                  </button>
-                  <span className="text-lg font-black font-digital text-slate-900">{sanitizeNumber(gameState.period)}</span>
-                  <button 
-                    onClick={() => updateGameState({ period: Math.min(gameState.maxPeriods, gameState.period + 1) })}
-                    className="text-xs text-slate-505 font-bold hover:text-slate-800"
-                  >
-                    +
-                  </button>
+                <span className="text-[10px] font-medieval font-black uppercase tracking-widest text-amber-900">{sanitizeString(gameState.periodName)}</span>
+                <div className="flex items-center space-x-3 bg-white px-4 py-1 rounded-lg border border-amber-300">
+                  <button onClick={() => updateGameState({ period: Math.max(1, gameState.period - 1) })} className="font-bold text-amber-900">-</button>
+                  <span className="text-md font-black font-digital text-slate-900">{sanitizeNumber(gameState.period)}</span>
+                  <button onClick={() => updateGameState({ period: Math.min(gameState.maxPeriods, gameState.period + 1) })} className="font-bold text-amber-900">+</button>
                 </div>
               </div>
 
-              {/* End Game Button */}
               <div className="flex flex-col items-center">
                 <button 
                   onClick={() => {
                     setConfirmModal({
                       show: true,
-                      title: 'End Match & Save Stats',
-                      message: `Are you sure you are ready to conclude the current match? This logs the final score (${gameState.teamAName}: ${gameState.teamAScore} vs ${gameState.teamBName}: ${gameState.teamBScore}) directly to your "Historic Data" Google Sheet tab.`,
+                      title: 'Conclude Knight Tournament',
+                      message: `Are you ready to blow the final trumpet and seal this duel? Result: (${gameState.teamAName}: ${gameState.teamAScore} vs ${gameState.teamBName}: ${gameState.teamBScore}) will be inked onto the historic parchment scrolls.`,
                       onConfirm: handleLogGameToAPI,
                       isLogging: false
                     });
                   }}
-                  className="w-full bg-emerald-600 hover:bg-emerald-700 text-white border border-emerald-600 py-2.5 px-3 rounded-xl font-black text-xs transition-colors flex items-center justify-center space-x-1.5 shadow-lg shadow-emerald-200"
+                  className="w-full bg-emerald-700 hover:bg-emerald-800 text-white py-2.5 px-3 rounded-xl font-medieval font-black text-2xs uppercase tracking-widest transition-colors flex items-center justify-center space-x-1 shadow-lg"
                 >
                   <Icon name="cloud-upload" className="w-3.5 h-3.5" />
-                  <span>End Game & Log</span>
+                  <span>Seal Match</span>
                 </button>
               </div>
-
             </div>
 
             {/* Manual Override Form Dialog Modal */}
             {overrideModal.show && (
-              <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-                <div className="max-w-sm w-full bg-white border-2 border-slate-900 rounded-2xl p-6 space-y-5 shadow-2xl text-slate-900 animate-scaleUp">
-                  <div className="flex items-center space-x-2 text-rose-600">
+              <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+                <div className="max-w-sm w-full bg-parchment border-4 border-amber-900 rounded-2xl p-6 space-y-5 shadow-2xl text-iron relative">
+                  <div className="flex items-center space-x-2 text-amber-900">
                     <Icon name="edit" className="w-5 h-5" />
-                    <h3 className="text-md font-extrabold uppercase tracking-wide">Manual Scoreboard Override</h3>
+                    <h3 className="text-sm font-medieval font-black uppercase tracking-wider">Citadel Scribe Scribe Override</h3>
                   </div>
                   
                   <div className="space-y-3">
                     <div>
-                      <label className="text-3xs uppercase tracking-wide font-black text-slate-550">Home Score ({sanitizeString(gameState.teamAName)})</label>
+                      <label className="text-[9px] uppercase tracking-wide font-black text-slate-700">Home Score ({sanitizeString(gameState.teamAName)})</label>
                       <input 
                         type="number"
                         value={overrideModal.teamA}
                         onChange={(e) => setOverrideModal(prev => ({ ...prev, teamA: e.target.value }))}
-                        className="w-full bg-slate-55 border-2 border-slate-200 rounded-xl py-2 px-3 text-sm font-bold focus:outline-none focus:border-rose-600"
+                        className="w-full bg-white border-2 border-amber-800 rounded-xl py-2 px-3 text-sm font-bold focus:outline-none"
                       />
                     </div>
 
                     <div>
-                      <label className="text-3xs uppercase tracking-wide font-black text-slate-555">Away Score ({sanitizeString(gameState.teamBName)})</label>
+                      <label className="text-[9px] uppercase tracking-wide font-black text-slate-700">Away Score ({sanitizeString(gameState.teamBName)})</label>
                       <input 
                         type="number"
                         value={overrideModal.teamB}
                         onChange={(e) => setOverrideModal(prev => ({ ...prev, teamB: e.target.value }))}
-                        className="w-full bg-slate-50 border-2 border-slate-200 rounded-xl py-2 px-3 text-sm font-bold focus:outline-none focus:border-rose-600"
+                        className="w-full bg-white border-2 border-amber-800 rounded-xl py-2 px-3 text-sm font-bold focus:outline-none"
                       />
                     </div>
 
                     <div>
-                      <label className="text-3xs uppercase tracking-wide font-black text-slate-555">Current {sanitizeString(gameState.periodName)}</label>
+                      <label className="text-[9px] uppercase tracking-wide font-black text-slate-700">Current {sanitizeString(gameState.periodName)}</label>
                       <input 
                         type="number"
                         value={overrideModal.period}
                         onChange={(e) => setOverrideModal(prev => ({ ...prev, period: e.target.value }))}
-                        className="w-full bg-slate-50 border-2 border-slate-200 rounded-xl py-2 px-3 text-sm font-bold focus:outline-none focus:border-rose-600"
+                        className="w-full bg-white border-2 border-amber-800 rounded-xl py-2 px-3 text-sm font-bold focus:outline-none"
                       />
                     </div>
                   </div>
@@ -1503,36 +1422,36 @@
                   <div className="flex justify-end space-x-2 pt-2">
                     <button 
                       onClick={() => setOverrideModal({ show: false, teamA: 0, teamB: 0, period: 1 })}
-                      className="bg-slate-100 hover:bg-slate-200 text-slate-600 py-2 px-4 rounded-lg text-xs font-semibold"
+                      className="bg-amber-900/10 hover:bg-amber-900/20 text-slate-700 py-2 px-4 rounded-lg text-xs font-bold"
                     >
                       Cancel
                     </button>
                     <button 
                       onClick={handleSaveManualOverrides}
-                      className="bg-slate-955 hover:bg-slate-800 text-white py-2 px-4 rounded-lg text-xs font-bold"
+                      className="bg-amber-800 hover:bg-amber-900 text-white py-2 px-4 rounded-lg text-xs font-bold font-medieval"
                     >
-                      Apply Changes
+                      Ink Changes
                     </button>
                   </div>
                 </div>
               </div>
             )}
 
-            {/* Custom Confirm & Transmit Dialog Modal (Avoids native system alerts) */}
+            {/* Custom Confirm & Transmit Dialog Modal */}
             {confirmModal.show && (
-              <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-                <div className="max-w-sm w-full bg-white border-2 border-slate-900 rounded-2xl p-6 space-y-5 shadow-2xl text-slate-900">
-                  <div className="flex items-center space-x-3 text-emerald-600">
+              <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+                <div className="max-w-sm w-full bg-parchment border-4 border-amber-900 rounded-2xl p-6 space-y-5 shadow-2xl text-iron">
+                  <div className="flex items-center space-x-3 text-emerald-800">
                     <Icon name="database-backup" className="w-6 h-6" />
-                    <h3 className="text-md font-extrabold uppercase tracking-wide">{confirmModal.title}</h3>
+                    <h3 className="text-sm font-medieval font-black uppercase tracking-wider">{confirmModal.title}</h3>
                   </div>
-                  <p className="text-xs text-slate-500 leading-relaxed font-medium">{confirmModal.message}</p>
+                  <p className="text-xs text-slate-700 leading-relaxed font-semibold">{confirmModal.message}</p>
                   
                   <div className="flex justify-end space-x-2 pt-2">
                     {!confirmModal.isLogging && confirmModal.onConfirm && (
                       <button 
                         onClick={() => setConfirmModal({ show: false, title: '', message: '', onConfirm: null, isLogging: false })}
-                        className="bg-slate-100 hover:bg-slate-200 text-slate-55 py-2 px-4 rounded-lg text-xs font-semibold"
+                        className="bg-amber-900/10 hover:bg-amber-900/20 text-slate-700 py-2 px-4 rounded-lg text-xs font-bold"
                       >
                         Cancel
                       </button>
@@ -1541,13 +1460,10 @@
                       <button 
                         onClick={confirmModal.onConfirm}
                         disabled={confirmModal.isLogging}
-                        className="bg-emerald-600 hover:bg-emerald-700 disabled:bg-slate-200 py-2 px-4 rounded-lg text-xs font-bold text-white flex items-center space-x-1.5"
+                        className="bg-emerald-700 hover:bg-emerald-800 disabled:bg-slate-200 py-2 px-4 rounded-lg text-xs font-bold text-white flex items-center space-x-1.5"
                       >
                         {confirmModal.isLogging ? (
-                          <>
-                            <div className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                            <span>Logging...</span>
-                          </>
+                          <span>Inking...</span>
                         ) : (
                           <span>Confirm</span>
                         )}
@@ -1555,7 +1471,7 @@
                     ) : (
                       <button 
                         onClick={() => setConfirmModal({ show: false, title: '', message: '', onConfirm: null, isLogging: false })}
-                        className="bg-blue-600 hover:bg-blue-700 text-white py-2 px-5 rounded-lg text-xs font-bold"
+                        className="bg-amber-800 hover:bg-amber-900 text-white py-2 px-5 rounded-lg text-xs font-bold"
                       >
                         Close
                       </button>
@@ -1569,81 +1485,103 @@
         );
       }
 
-      // Render DISPLAY Page (Optimized for Wall Projection - Stark White Light Mode)
       if (viewMode === 'display') {
         const isVolleyball = gameState.sport === 'Volleyball' || gameState.timerLength === 0;
 
         return (
-          <div className="h-screen w-screen bg-white text-slate-900 flex flex-col justify-center p-8 overflow-hidden select-none relative no-scrollbar">
+          <div className="h-screen w-screen bg-parchment text-slate-900 flex flex-col justify-between p-10 overflow-hidden select-none relative no-scrollbar iron-border">
             
-            {/* Control Panel overlay for exiting display mode (Double tap anywhere or use the top-left trigger) */}
-            <div className="absolute top-4 left-4 z-50 opacity-0 hover:opacity-100 transition-opacity">
+            {/* Medieval Banner Rod Overlay Decoration */}
+            <div className="absolute top-0 inset-x-0 h-4 bg-gradient-to-b from-stone-800 to-stone-950 border-b-2 border-amber-600"></div>
+            
+            {/* Control Panel overlay for exiting display mode */}
+            <div className="absolute top-6 left-6 z-50 opacity-0 hover:opacity-100 transition-opacity">
               <button 
                 onClick={() => setViewMode('lobby')}
-                className="bg-white hover:bg-slate-100 border-2 border-slate-900 px-3 py-1.5 rounded-lg text-2xs text-slate-900 uppercase tracking-wider font-bold shadow-md"
+                className="bg-parchment hover:bg-amber-100 border-2 border-amber-900 px-3 py-1.5 rounded-lg text-2xs text-slate-900 font-medieval uppercase tracking-wider font-bold shadow-md"
               >
-                Quit Show
+                Depart View
               </button>
             </div>
 
-            {/* Middle Main Content Block using auto-sizing CSS Grid to prevent overlap */}
-            <div className="grid grid-cols-[minmax(0,1.2fr)_auto_minmax(0,1.2fr)] gap-8 items-center flex-grow h-full max-h-[90vh] py-2 overflow-hidden">
+            {/* Middle Main Content Block: Tournament Arena style layout */}
+            <div className="grid grid-cols-[minmax(0,1.2fr)_auto_minmax(0,1.2fr)] gap-8 items-center flex-grow h-full max-h-[85vh] py-2 overflow-hidden">
               
-              {/* Home Team Panel */}
-              <div className="h-full flex flex-col justify-center items-center p-6 bg-slate-50 border-2 border-slate-950 rounded-3xl projector-shadow min-w-0">
-                <TeamLogo value={gameState.teamALogo} fallbackEmoji="⚡" className="w-[clamp(4rem,18vh,12rem)] h-[clamp(4rem,18vh,12rem)]" />
-                <h2 className="mt-4 text-[clamp(1.1rem,3vh,2.2rem)] font-black uppercase tracking-wide text-slate-900 text-center break-words whitespace-normal w-full px-2 leading-tight">
+              {/* Home Team Panel (Crimson Knights Keep) */}
+              <div className="h-full flex flex-col justify-center items-center p-8 bg-white/60 border-4 border-red-900 rounded-3xl banner-shadow min-w-0 relative">
+                <div className="absolute -top-1 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-red-900 text-white text-[11px] font-medieval px-4 py-1 rounded-full uppercase tracking-widest border border-amber-500 shadow-md">
+                  Crimson Castle
+                </div>
+                
+                <TeamLogo value={gameState.teamALogo} fallbackEmoji="🛡️" className="w-[clamp(4.5rem,20vh,13rem)] h-[clamp(4.5rem,20vh,13rem)]" />
+                
+                <h2 className="mt-4 text-[clamp(1.2rem,3.2vh,2.5rem)] font-royal font-black uppercase tracking-wide text-red-950 text-center break-words whitespace-normal w-full px-2 leading-none">
                   {sanitizeString(gameState.teamAName)}
                 </h2>
                 
-                {/* Score Big Display */}
-                <div className="text-[clamp(4rem,28vh,14rem)] font-black font-digital digital-red select-none leading-none mt-2">
+                {/* Huge high-contrast score */}
+                <div className="text-[clamp(4.5rem,30vh,15rem)] font-black font-digital glowing-crimson select-none leading-none mt-2">
                   {sanitizeNumber(gameState.teamAScore)}
                 </div>
               </div>
 
-              {/* Center Game Clock Section (Auto-sizes exactly to fit clock box) */}
-              <div className="flex flex-col justify-center items-center px-6 py-4 space-y-8 text-center flex-shrink-0">
+              {/* Center Game Clock Section */}
+              <div className="flex flex-col justify-center items-center px-4 py-4 space-y-8 text-center flex-shrink-0">
                 
                 {/* Period Quarter indicator */}
                 <div className="flex flex-col items-center">
-                  <span className="text-slate-500 text-[clamp(0.8rem,2vh,1.4rem)] font-black uppercase tracking-widest">
+                  <span className="text-amber-900 font-medieval text-[clamp(0.9rem,2.2vh,1.6rem)] font-black uppercase tracking-widest bg-amber-900/10 px-5 py-1 rounded-full border border-amber-800/35">
                     {sanitizeString(gameState.periodName)}
                   </span>
-                  <span className="text-[clamp(2.5rem,10vh,6rem)] font-black font-digital text-slate-900 leading-none mt-2 select-none">
+                  <span className="text-[clamp(3rem,11vh,6.5rem)] font-black font-digital text-stone-900 leading-none mt-3 select-none">
                     {sanitizeNumber(gameState.period)}
                   </span>
                 </div>
 
-                {/* BIG CLOCK DISPLAY */}
+                {/* BIG CLOCK DISPLAY (Medieval Iron Frame) */}
                 {!isVolleyball && (
                   <div className="space-y-4 w-full flex flex-col items-center">
-                    <div className="text-[clamp(3rem,11vh,7.5rem)] font-black font-digital tracking-wide digital-amber select-none bg-slate-100 border-4 border-slate-900 py-4 px-10 rounded-3xl projector-shadow leading-none inline-block whitespace-nowrap">
+                    <div className="text-[clamp(3.5rem,12vh,8rem)] font-black font-digital tracking-wide glowing-amber-glow select-none bg-stone-950 border-4 border-amber-800 py-4 px-12 rounded-3xl banner-shadow leading-none inline-block whitespace-nowrap">
                       {formatTime(displayTime)}
                     </div>
                     {gameState.isTimerRunning && (
-                      <div className="flex items-center justify-center text-emerald-600 gap-1.5 text-xs font-black animate-pulse">
-                        <div className="w-2.5 h-2.5 bg-emerald-500 rounded-full"></div>
-                        <span>CLOCK ACTIVE</span>
+                      <div className="flex items-center justify-center text-emerald-800 gap-1.5 text-xs font-medieval font-black animate-pulse">
+                        <Icon name="swords" className="w-4 h-4 text-emerald-700" />
+                        <span>COMBAT UNDERWAY</span>
                       </div>
                     )}
                   </div>
                 )}
               </div>
 
-              {/* Away Team Panel */}
-              <div className="h-full flex flex-col justify-center items-center p-6 bg-slate-50 border-2 border-slate-950 rounded-3xl projector-shadow min-w-0">
-                <TeamLogo value={gameState.teamBLogo} fallbackEmoji="🔥" className="w-[clamp(4rem,18vh,12rem)] h-[clamp(4rem,18vh,12rem)]" />
-                <h2 className="mt-4 text-[clamp(1.1rem,3vh,2.2rem)] font-black uppercase tracking-wide text-slate-900 text-center break-words whitespace-normal w-full px-2 leading-tight">
+              {/* Away Team Panel (Blue Kingdom) */}
+              <div className="h-full flex flex-col justify-center items-center p-8 bg-white/60 border-4 border-blue-900 rounded-3xl banner-shadow min-w-0 relative">
+                <div className="absolute -top-1 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-blue-900 text-white text-[11px] font-medieval px-4 py-1 rounded-full uppercase tracking-widest border border-amber-500 shadow-md">
+                  Royal Alliance
+                </div>
+                
+                <TeamLogo value={gameState.teamBLogo} fallbackEmoji="🔥" className="w-[clamp(4.5rem,20vh,13rem)] h-[clamp(4.5rem,20vh,13rem)]" />
+                
+                <h2 className="mt-4 text-[clamp(1.2rem,3.2vh,2.5rem)] font-royal font-black uppercase tracking-wide text-blue-950 text-center break-words whitespace-normal w-full px-2 leading-none">
                   {sanitizeString(gameState.teamBName)}
                 </h2>
                 
-                {/* Score Big Display */}
-                <div className="text-[clamp(4rem,28vh,14rem)] font-black font-digital digital-blue select-none leading-none mt-2">
+                {/* Huge high-contrast score */}
+                <div className="text-[clamp(4.5rem,30vh,15rem)] font-black font-digital glowing-royal-blue select-none leading-none mt-2">
                   {sanitizeNumber(gameState.teamBScore)}
                 </div>
               </div>
 
+            </div>
+
+            {/* Footer with Knights Branding */}
+            <div className="flex justify-between items-center text-amber-900/60 font-medieval text-xs pt-4 border-t border-amber-800/20">
+              <span>Court Duel Protocol</span>
+              <div className="flex items-center gap-1">
+                <Icon name="shield" className="w-4 h-4" />
+                <span className="font-bold">Winchester Knights</span>
+              </div>
+              <span>Anno Domini 2026</span>
             </div>
 
           </div>
