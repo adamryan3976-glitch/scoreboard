@@ -335,8 +335,15 @@
     };
 
     function TeamLogo({ value, fallbackEmoji = "⚔️", className = "w-16 h-16 object-contain" }) {
+      const [imgFailed, setImgFailed] = React.useState(false);
+
+      // Reset error state if a brand new logo value is selected or synced
+      React.useEffect(() => {
+        setImgFailed(false);
+      }, [value]);
+
       const cleanUrl = sanitizeString(value).trim();
-      if (!cleanUrl) {
+      if (!cleanUrl || imgFailed) {
         return <span className="text-5xl select-none">{fallbackEmoji}</span>;
       }
       const isUrl = cleanUrl.startsWith('http://') || cleanUrl.startsWith('https://') || cleanUrl.startsWith('data:image/');
@@ -347,10 +354,7 @@
               src={cleanUrl} 
               alt="Team Badge" 
               className="max-w-full max-h-full object-contain"
-              onError={(e) => {
-                e.target.style.display = 'none';
-                e.target.parentNode.innerHTML = `<span class="text-4xl select-none">🛡️</span>`;
-              }}
+              onError={() => setImgFailed(true)}
             />
           </div>
         );
