@@ -1212,6 +1212,22 @@
                   ))}
                 </select>
 
+                {}
+                {schoolALogos.length > 1 && (
+                  <div className="w-full flex flex-col space-y-1">
+                    <label className="text-[9px] font-medieval font-black uppercase tracking-wider text-red-900 text-center">Crest Emblem</label>
+                    <select
+                      value={gameState.teamALogo}
+                      onChange={(e) => updateGameState({ teamALogo: e.target.value })}
+                      className="w-full bg-white border border-amber-800 text-[10px] py-1 px-1 rounded font-bold text-center text-slate-800"
+                    >
+                      {schoolALogos.map((logo, idx) => (
+                        <option key={idx} value={logo}>Crest Option {idx + 1}</option>
+                      ))}
+                    </select>
+                  </div>
+                )}
+
                 <div className="text-center relative flex flex-col items-center min-h-[90px] justify-center">
                   <TeamLogo value={gameState.teamALogo} fallbackEmoji="🛡️" className="w-12 h-12" />
                   <div className="text-5xl font-black font-digital text-red-800 tracking-wider mt-1">{sanitizeNumber(gameState.teamAScore)}</div>
@@ -1271,6 +1287,22 @@
                     <option key={idx} value={s.name}>{sanitizeString(s.name)}</option>
                   ))}
                 </select>
+
+                {}
+                {schoolBLogos.length > 1 && (
+                  <div className="w-full flex flex-col space-y-1">
+                    <label className="text-[9px] font-medieval font-black uppercase tracking-wider text-blue-900 text-center">Crest Emblem</label>
+                    <select
+                      value={gameState.teamBLogo}
+                      onChange={(e) => updateGameState({ teamBLogo: e.target.value })}
+                      className="w-full bg-white border border-amber-800 text-[10px] py-1 px-1 rounded font-bold text-center text-slate-800"
+                    >
+                      {schoolBLogos.map((logo, idx) => (
+                        <option key={idx} value={logo}>Crest Option {idx + 1}</option>
+                      ))}
+                    </select>
+                  </div>
+                )}
 
                 <div className="text-center relative flex flex-col items-center min-h-[90px] justify-center">
                   <TeamLogo value={gameState.teamBLogo} fallbackEmoji="🔥" className="w-12 h-12" />
@@ -1510,7 +1542,7 @@
               {/* Home Team Panel (Crimson Knights Keep) */}
               <div className="h-full flex flex-col justify-center items-center p-8 bg-white/60 border-4 border-red-900 rounded-3xl banner-shadow min-w-0 relative">
                 <div className="absolute -top-1 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-red-900 text-white text-[11px] font-medieval px-4 py-1 rounded-full uppercase tracking-widest border border-amber-500 shadow-md">
-                  Crimson Castle
+                  Home
                 </div>
                 
                 <TeamLogo value={gameState.teamALogo} fallbackEmoji="🛡️" className="w-[clamp(4.5rem,20vh,13rem)] h-[clamp(4.5rem,20vh,13rem)]" />
@@ -1557,7 +1589,7 @@
               {/* Away Team Panel (Blue Kingdom) */}
               <div className="h-full flex flex-col justify-center items-center p-8 bg-white/60 border-4 border-blue-900 rounded-3xl banner-shadow min-w-0 relative">
                 <div className="absolute -top-1 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-blue-900 text-white text-[11px] font-medieval px-4 py-1 rounded-full uppercase tracking-widest border border-amber-500 shadow-md">
-                  Royal Alliance
+                  Away
                 </div>
                 
                 <TeamLogo value={gameState.teamBLogo} fallbackEmoji="🔥" className="w-[clamp(4.5rem,20vh,13rem)] h-[clamp(4.5rem,20vh,13rem)]" />
